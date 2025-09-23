@@ -28,9 +28,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload to Cloudinary
+    // Upload to Cloudinary using server-side credentials (no preset required)
     const uploadResponse = await cloudinary.uploader.upload(data, {
-      upload_preset: 'history_box_preset', // You'll need to create this in Cloudinary
       folder: 'history_box',
       transformation: [
         { width: 1200, height: 800, crop: 'limit' },
@@ -48,8 +47,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Upload error:', error);
+    const message = (error as any)?.message || 'Failed to upload image';
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: message },
       { status: 500 }
     );
   }
