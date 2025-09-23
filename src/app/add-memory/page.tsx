@@ -19,6 +19,7 @@ export default function AddMemory() {
     longitude: 0,
     address: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,9 +55,61 @@ export default function AddMemory() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // For now, just log the data (you'll integrate with your database later)
-    console.log('Memory data:', formData);
-    alert('Memory saved! (Currently just logged to console - database integration coming next)');
+    if (!user || !formData.title || !formData.imageUrl || (formData.latitude === 0 && formData.longitude === 0)) {
+      alert('Please fill in all required fields and ensure location and image are selected.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      // Get Firebase auth token
+      const token = await user.getIdToken();
+      
+      // Send memory data to API
+      const response = await fetch('/api/memories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          description: formData.description,
+          imageUrl: formData.imageUrl,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          address: formData.address,
+          date: formData.date
+        })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert('Memory saved successfully!');
+        // Reset form
+        setFormData({
+          title: '',
+          description: '',
+          date: '',
+          imageUrl: '',
+          latitude: 0,
+          longitude: 0,
+          address: ''
+        });
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        console.error('Error saving memory:', result.error);
+        alert(`Failed to save memory: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to save memory. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -190,9 +243,10 @@ export default function AddMemory() {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                disabled={isSubmitting}
+                className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
               >
-                Save Memory
+                {isSubmitting ? 'Saving...' : 'Save Memory'}
               </button>
             </div>
           </form>

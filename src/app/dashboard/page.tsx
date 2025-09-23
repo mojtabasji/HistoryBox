@@ -1,19 +1,64 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import Image from 'next/image';
+
+type Memory = {
+  id: number;
+  title: string;
+  description?: string | null;
+  caption?: string | null;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  memoryDate?: string | null;
+  createdAt: string;
+};
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
+  const [memories, setMemories] = useState<Memory[]>([]);
+  const [loadingMemories, setLoadingMemories] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const fetchMemories = async () => {
+      if (!user) return;
+      setLoadingMemories(true);
+      setError(null);
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/memories', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load memories');
+        setMemories(data.memories || []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load memories');
+      } finally {
+        setLoadingMemories(false);
+      }
+    };
+    fetchMemories();
+  }, [user]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   if (loading) {
     return (
@@ -26,11 +71,6 @@ export default function Dashboard() {
   if (!user) {
     return null; // Will redirect to login
   }
-
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,41 +101,63 @@ export default function Dashboard() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Welcome to your Dashboard!
-              </h2>
-              <p className="text-gray-600 mb-4">
-                You are successfully logged in as {user.email}
-              </p>
-              <div className="grid gap-4 md:grid-cols-2 max-w-2xl mx-auto">
-                <div className="bg-white p-6 rounded-lg shadow border">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">🗺️ Map View</h3>
-                  <p className="text-gray-600 mb-4">
-                    Visualize your memories on an interactive world map
-                  </p>
-                  <a 
-                    href="/map" 
-                    className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    Explore Map
-                  </a>
-                </div>
-                <div className="bg-white p-6 rounded-lg shadow border">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">📝 Add Memory</h3>
-                  <p className="text-gray-600 mb-4">
-                    Record a new memory with location and photos
-                  </p>
-                  <a 
-                    href="/add-memory" 
-                    className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                  >
-                    Add Memory
-                  </a>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">Your Memories</h2>
+            <div className="space-x-2">
+              <a
+                href="/map"
+                className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Explore Map
+              </a>
+              <a
+                href="/add-memory"
+                className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Add Memory
+              </a>
+            </div>
+          </div>
+
+          {loadingMemories && (
+            <div className="border rounded-lg p-6 bg-white shadow">
+              <p className="text-gray-600">Loading your memories...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="border rounded-lg p-4 bg-red-50 text-red-700">
+              {error}
+            </div>
+          )}
+
+          {!loadingMemories && !error && memories.length === 0 && (
+            <div className="border rounded-lg p-6 bg-white shadow text-center">
+              <p className="text-gray-600">No memories yet. Start by adding your first one!</p>
+            </div>
+          )}
+
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {memories.map((m) => (
+              <div key={m.id} className="bg-white rounded-lg shadow overflow-hidden border">
+                {m.imageUrl && (
+                  <div className="relative w-full h-48">
+                    <Image src={m.imageUrl} alt={m.title || 'Memory'} fill className="object-cover" />
+                  </div>
+                )}
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">{m.title}</h3>
+                  {m.address && (
+                    <p className="text-sm text-gray-500 line-clamp-1">{m.address}</p>
+                  )}
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{m.description || m.caption}</p>
+                  <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
+                    <span>{new Date(m.memoryDate || m.createdAt).toLocaleDateString()}</span>
+                    <span>Lat: {m.latitude.toFixed(3)}, Lng: {m.longitude.toFixed(3)}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </main>
