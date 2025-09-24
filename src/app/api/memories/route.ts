@@ -2,15 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { findOrCreateRegion } from '../../../lib/geohash';
 import { getSupabaseServer } from '@/lib/supabaseServer';
-import { getSession } from '@auth0/nextjs-auth0';
+// Auth is resolved by delegating to our Edge route /api/auth/me to avoid Node cookies() issues in Next 15
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth0 session
-    const session = await getSession();
-    const auth0User = session?.user;
+    // Resolve user via Edge /api/auth/me using incoming cookies
+    const meUrl = new URL('/api/auth/me', request.url);
+    const meRes = await fetch(meUrl.toString(), {
+      headers: { cookie: request.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    });
+    const { user: auth0User } = meRes.ok ? await meRes.json() : { user: null };
     if (!auth0User) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
@@ -165,8 +170,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    const auth0User = session?.user;
+    // Resolve user via Edge /api/auth/me using incoming cookies
+    const meUrl = new URL('/api/auth/me', request.url);
+    const meRes = await fetch(meUrl.toString(), {
+      headers: { cookie: request.headers.get('cookie') ?? '' },
+      cache: 'no-store',
+    });
+    const { user: auth0User } = meRes.ok ? await meRes.json() : { user: null };
     if (!auth0User) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const email = typeof auth0User.email === 'string' ? auth0User.email : undefined;
     const sub = typeof auth0User.sub === 'string' ? auth0User.sub : undefined;

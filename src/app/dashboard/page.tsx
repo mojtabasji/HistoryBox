@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
   const [memories, setMemories] = useState<Memory[]>([]);
+  const [mounted, setMounted] = useState(false);
   const [loadingMemories, setLoadingMemories] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +32,11 @@ export default function Dashboard() {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  // Ensure we only render locale-sensitive values after mount to avoid SSR/CSR mismatches
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchMemories = async () => {
@@ -146,7 +152,11 @@ export default function Dashboard() {
                   )}
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{m.description || m.caption}</p>
                   <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
-                    <span>{new Date(m.memoryDate || m.createdAt).toLocaleDateString()}</span>
+                    <span suppressHydrationWarning>
+                      {mounted
+                        ? new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))
+                        : ''}
+                    </span>
                     <span>Lat: {m.latitude.toFixed(3)}, Lng: {m.longitude.toFixed(3)}</span>
                   </div>
                 </div>

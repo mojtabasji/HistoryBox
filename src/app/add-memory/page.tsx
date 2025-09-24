@@ -135,7 +135,7 @@ export default function AddMemory() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome{(user as any)?.email ? `, ${(user as any).email}` : ''}</span>
+              <span className="text-gray-700">Welcome{user?.email ? `, ${user.email}` : ''}</span>
             </div>
           </div>
         </div>
@@ -151,7 +151,16 @@ export default function AddMemory() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={handleSubmit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                // Prevent unintended submits when selecting files
+                e.preventDefault();
+              }
+            }}
+            className="space-y-6"
+          >
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Memory Details</h3>
               

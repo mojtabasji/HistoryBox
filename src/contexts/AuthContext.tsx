@@ -30,26 +30,43 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<SimpleUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const didInit = React.useRef(false);
+  const inFlight = React.useRef(false);
+  const lastFetchedAt = React.useRef(0);
 
   useEffect(() => {
     let cancelled = false;
+
     const load = async () => {
+      if (inFlight.current) return;
+      inFlight.current = true;
       try {
         setLoading(true);
-  const res = await fetch('/api/auth/me');
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch session');
         const data = await res.json();
-        // data.user shape: { sub, name, email, picture }
         if (!cancelled) setUser(data?.user ?? null);
       } catch {
         if (!cancelled) setUser(null);
       } finally {
+        lastFetchedAt.current = Date.now();
+        inFlight.current = false;
         if (!cancelled) setLoading(false);
       }
     };
-    load();
-    // revalidate on focus
-    const onFocus = () => load();
+
+    // Guard against Strict Mode double-invocation in dev
+    if (!didInit.current) {
+      didInit.current = true;
+      void load();
+    }
+
+    // Revalidate on window focus, but rate-limit to avoid duplicates
+    const onFocus = () => {
+      const now = Date.now();
+      if (now - lastFetchedAt.current < 5000) return; // 5s cooldown
+      void load();
+    };
     window.addEventListener('focus', onFocus);
     return () => {
       cancelled = true;
