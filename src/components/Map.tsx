@@ -3,8 +3,8 @@
 import React, { useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
+// Leaflet CSS is imported globally in src/app/globals.css
+import type { Icon } from 'leaflet';
 import marker1x from 'leaflet/dist/images/marker-icon.png';
 import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -39,16 +39,29 @@ const defaultCenter = {
   lng: -74.0060
 };
 
-// Fix default marker icons path when bundling
-const DefaultIcon = L.icon({
-  iconUrl: marker1x as unknown as string,
-  iconRetinaUrl: marker2x as unknown as string,
-  shadowUrl: markerShadow as unknown as string,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+function useLeafletDefaultIcon() {
+  const [icon, setIcon] = React.useState<Icon | null>(null);
+  React.useEffect(() => {
+    let mounted = true;
+    async function load() {
+      if (typeof window === 'undefined') return;
+      const L = await import('leaflet');
+      const newIcon = L.icon({
+        iconUrl: marker1x as unknown as string,
+        iconRetinaUrl: marker2x as unknown as string,
+        shadowUrl: markerShadow as unknown as string,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+      if (mounted) setIcon(newIcon);
+    }
+    load();
+    return () => { mounted = false; };
+  }, []);
+  return icon;
+}
 
 export default function Map({ 
   posts, 
@@ -62,6 +75,7 @@ export default function Map({
   }, [onMarkerClick]);
 
   const mapStyle = useMemo(() => ({ width: '100%', height: '80vh' }), []);
+  const defaultIcon = useLeafletDefaultIcon();
 
   return (
     <div className={className}>
@@ -71,7 +85,7 @@ export default function Map({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {posts.map((post) => (
-          <Marker key={post.id} position={[post.latitude, post.longitude]} icon={DefaultIcon} eventHandlers={{ click: () => handleMarkerClick(post) }}>
+          <Marker key={post.id} position={[post.latitude, post.longitude]} icon={defaultIcon ?? undefined} eventHandlers={{ click: () => handleMarkerClick(post) }}>
             <Popup>
               <div className="p-1 max-w-xs">
                 <h3 className="font-semibold text-base mb-1">{post.title || `Post ${post.id}`}</h3>

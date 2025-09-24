@@ -1,12 +1,15 @@
 'use client';
 
-import React, { useCallback, useMemo, useState } from 'react';
-import 'leaflet/dist/leaflet.css';
-import L, { LeafletMouseEvent } from 'leaflet';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// Leaflet CSS is imported globally in src/app/globals.css
+import type { LeafletMouseEvent, Icon } from 'leaflet';
+import dynamic from 'next/dynamic';
 import marker1x from 'leaflet/dist/images/marker-icon.png';
 import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import { MapContainer as LeafletMap, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false });
 
 interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
@@ -21,25 +24,43 @@ const defaultCenter = {
   lng: -74.0060
 };
 
-// Fix default marker icons path when bundling
-const DefaultIcon = L.icon({
-  iconUrl: (marker1x as unknown as string),
-  iconRetinaUrl: (marker2x as unknown as string),
-  shadowUrl: (markerShadow as unknown as string),
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-function ClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click(e: LeafletMouseEvent) {
-      onPick(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
+// Create marker icon on the client to avoid SSR window reference
+function useLeafletDefaultIcon() {
+  const [icon, setIcon] = useState<Icon | null>(null);
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      if (typeof window === 'undefined') return;
+      const L = await import('leaflet');
+      const newIcon = L.icon({
+        iconUrl: (marker1x as unknown as string),
+        iconRetinaUrl: (marker2x as unknown as string),
+        shadowUrl: (markerShadow as unknown as string),
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+      if (mounted) setIcon(newIcon);
+    }
+    load();
+    return () => { mounted = false; };
+  }, []);
+  return icon;
 }
+
+const ClickHandler = dynamic(async () => {
+  const { useMapEvents } = await import('react-leaflet');
+  function Component({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+    useMapEvents({
+      click(e: LeafletMouseEvent) {
+        onPick(e.latlng.lat, e.latlng.lng);
+      },
+    });
+    return <></>;
+  }
+  return Component;
+}, { ssr: false });
 
 export default function LocationPicker({ 
   onLocationSelect, 
@@ -51,6 +72,7 @@ export default function LocationPicker({
   );
 
   const style = useMemo(() => ({ width: '100%', height: '400px' }), []);
+  const defaultIcon = useLeafletDefaultIcon();
 
   const handlePick = useCallback(async (lat: number, lng: number) => {
     const location = { lat, lng };
@@ -81,7 +103,9 @@ export default function LocationPicker({
       <LeafletMap center={[selectedLocation?.lat ?? initialLocation.lat, selectedLocation?.lng ?? initialLocation.lng]} zoom={10} style={style} scrollWheelZoom>
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <ClickHandler onPick={handlePick} />
-        {selectedLocation && <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={DefaultIcon} />}
+        {selectedLocation && (
+          <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={defaultIcon ?? undefined} />
+        )}
       </LeafletMap>
       {selectedLocation && (
         <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">

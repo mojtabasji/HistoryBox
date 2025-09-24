@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 
 declare global {
   // Using global var pattern for Next.js hot reload in dev
