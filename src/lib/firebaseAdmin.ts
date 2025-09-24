@@ -13,6 +13,10 @@ function sanitizePrivateKey(key: string | undefined): string | undefined {
 }
 
 export function getServerAuth(): Auth {
+  // Keep track of which project Admin is using for helpful error messages
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const g: any = globalThis as any;
+  if (!g.__adminProjectId) g.__adminProjectId = undefined as string | undefined;
   if (!getApps().length) {
     // Option 1: FIREBASE_SERVICE_ACCOUNT as JSON
     const svcJson = process.env.FIREBASE_SERVICE_ACCOUNT;
@@ -47,6 +51,7 @@ export function getServerAuth(): Auth {
       // Try application default credentials as a last resort (useful on GCP)
       try {
         initializeApp({ credential: applicationDefault() });
+        g.__adminProjectId = process.env.FIREBASE_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT;
       } catch {
         throw new Error(
           `Firebase Admin not configured. Missing: ${missing.join(', ')}. Set FIREBASE_SERVICE_ACCOUNT (JSON) or individual vars.`
@@ -56,7 +61,14 @@ export function getServerAuth(): Auth {
       initializeApp({
         credential: cert({ projectId, clientEmail, privateKey: privateKey! }),
       });
+      g.__adminProjectId = projectId;
     }
   }
   return getAuth();
+}
+
+export function getAdminProjectId(): string | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const g: any = globalThis as any;
+  return g.__adminProjectId;
 }

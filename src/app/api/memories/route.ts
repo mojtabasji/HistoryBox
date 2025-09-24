@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { findOrCreateRegion } from '../../../lib/geohash';
-import { getServerAuth } from '@/lib/firebaseAdmin';
+import { getAdminProjectId, getServerAuth } from '@/lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
 
@@ -26,10 +26,11 @@ export async function POST(request: NextRequest) {
       console.error('Token verification failed:', error);
       const message = error instanceof Error ? error.message : 'Invalid token';
       const status = message.includes('Firebase Admin not configured') ? 500 : 401;
-      return NextResponse.json(
-        { error: message.includes('Firebase Admin not configured') ? 'Server auth not configured' : 'Invalid token' },
-        { status }
-      );
+      const adminProject = getAdminProjectId();
+      const hint = status === 401
+        ? 'Invalid token. Ensure client Firebase project matches server Admin project and the token is a Firebase ID token (not access token).'
+        : 'Server auth not configured';
+      return NextResponse.json({ error: hint, adminProject }, { status });
     }
 
     const firebaseUid = decodedToken.uid;
@@ -155,10 +156,11 @@ export async function GET(request: NextRequest) {
       console.error('Token verification failed:', error);
       const message = error instanceof Error ? error.message : 'Invalid token';
       const status = message.includes('Firebase Admin not configured') ? 500 : 401;
-      return NextResponse.json(
-        { error: message.includes('Firebase Admin not configured') ? 'Server auth not configured' : 'Invalid token' },
-        { status }
-      );
+      const adminProject = getAdminProjectId();
+      const hint = status === 401
+        ? 'Invalid token. Ensure client Firebase project matches server Admin project and the token is a Firebase ID token (not access token).'
+        : 'Server auth not configured';
+      return NextResponse.json({ error: hint, adminProject }, { status });
     }
 
     const firebaseUid = decodedToken.uid;

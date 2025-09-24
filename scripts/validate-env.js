@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 // Environment validation script
 // Note: Run this with: node scripts/validate-env.js
@@ -65,6 +66,25 @@ if (allGood) {
   console.log('📝 Please check your .env.local file');
   console.log('📖 See ENVIRONMENT_SETUP.md for detailed instructions');
   process.exit(1);
+}
+
+// Additional check: Compare Firebase client project with Admin project
+try {
+  const clientProject = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  let adminProject = process.env.FIREBASE_PROJECT_ID;
+  const svc = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (svc) {
+    const parsed = JSON.parse(svc);
+    adminProject = parsed.project_id || parsed.projectId || adminProject;
+  }
+  if (clientProject && adminProject && clientProject !== adminProject) {
+    console.log('\n⚠️  Detected mismatch between client Firebase project and Admin project:');
+    console.log(`   • NEXT_PUBLIC_FIREBASE_PROJECT_ID = ${clientProject}`);
+    console.log(`   • Admin project (service account) = ${adminProject}`);
+    console.log('   → Tokens from the client will be rejected by Admin. Make them match.');
+  }
+} catch (_e) {
+  // ignore
 }
 
 console.log('');
