@@ -38,12 +38,7 @@ export default function Dashboard() {
       setLoadingMemories(true);
       setError(null);
       try {
-        const token = await user.getIdToken(true);
-        const res = await fetch('/api/memories', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch('/api/memories');
         const data = await res.json();
         if (!res.ok) {
           const prefix = res.status === 401 ? 'Auth error' : 'Server error';
@@ -91,13 +86,8 @@ export default function Dashboard() {
               >
                 View Map
               </Link>
-              <span className="text-gray-700">Welcome, {user.email}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Logout
-              </button>
+              <span className="text-gray-700">Welcome{user.email ? `, ${user.email}` : ''}</span>
+              <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
             </div>
           </div>
         </div>

@@ -50,8 +50,7 @@ const requiredDeps = [
   'next',
   'react',
   'react-dom',
-  'firebase',
-  'firebase-admin',
+  '@auth0/nextjs-auth0',
   'cloudinary'
 ];
 
@@ -80,17 +79,11 @@ if (fs.existsSync('.eslintignore')) {
 // Environment variables reminder
 console.log('\n🔐 Environment Variables Checklist:');
 console.log('Make sure these are set in Vercel Dashboard:');
-console.log('   • NEXT_PUBLIC_FIREBASE_API_KEY');
-console.log('   • NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
-console.log('   • NEXT_PUBLIC_FIREBASE_PROJECT_ID');
-console.log('   • NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
-console.log('   • NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID');
-console.log('   • NEXT_PUBLIC_FIREBASE_APP_ID');
-console.log('   • NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID');
-console.log('   • FIREBASE_SERVICE_ACCOUNT (JSON)  OR:');
-console.log('       • FIREBASE_PROJECT_ID');
-console.log('       • FIREBASE_CLIENT_EMAIL');
-console.log('       • FIREBASE_PRIVATE_KEY');
+console.log('   • AUTH0_SECRET');
+console.log('   • AUTH0_BASE_URL');
+console.log('   • AUTH0_ISSUER_BASE_URL');
+console.log('   • AUTH0_CLIENT_ID');
+console.log('   • AUTH0_CLIENT_SECRET');
 console.log('   • CLOUDINARY_CLOUD_NAME');
 console.log('   • CLOUDINARY_API_KEY');
 console.log('   • CLOUDINARY_API_SECRET');

@@ -64,15 +64,11 @@ export default function AddMemory() {
     setIsSubmitting(true);
     
     try {
-      // Get Firebase auth token
-  const token = await user.getIdToken(true);
-      
-      // Send memory data to API
+      // Send memory data to API; session is carried via cookies
       const response = await fetch('/api/memories', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           title: formData.title,
@@ -139,7 +135,7 @@ export default function AddMemory() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {user.email}</span>
+              <span className="text-gray-700">Welcome{(user as any)?.email ? `, ${(user as any).email}` : ''}</span>
             </div>
           </div>
         </div>
