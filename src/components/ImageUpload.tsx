@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void;
@@ -12,7 +12,20 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Keep preview in sync if parent passes a new URL
+  useEffect(() => {
+    if (currentImage && currentImage !== preview) {
+      setPreview(currentImage);
+    }
+    if (!currentImage && preview && !objectUrl) {
+      // no external image and not a blob -> clear
+      setPreview(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentImage]);
 
   const handleFileSelect = (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -36,8 +49,11 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       const base64 = await convertToBase64(file);
       
       // Create preview
-      const previewUrl = URL.createObjectURL(file);
-      setPreview(previewUrl);
+  const previewUrl = URL.createObjectURL(file);
+  // Track and cleanup previous object URL if any
+  if (objectUrl) URL.revokeObjectURL(objectUrl);
+  setObjectUrl(previewUrl);
+  setPreview(previewUrl);
 
       // Upload to Cloudinary
       const response = await fetch('/api/upload', {
@@ -56,6 +72,10 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       const { url } = await response.json();
       onImageUpload(url);
       setPreview(url);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+        setObjectUrl(null);
+      }
       
     } catch (error) {
       console.error('Upload error:', error);
@@ -133,15 +153,8 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
             <img
               src={preview}
               alt="Preview"
-              className="mx-auto rounded-lg object-cover max-h-48"
+              className="mx-auto rounded-lg max-h-64 w-full h-auto object-contain bg-gray-50"
             />
-            {!uploading && (
-              <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center">
-                <span className="text-white opacity-0 hover:opacity-100 transition-opacity">
-                  Click to change image
-                </span>
-              </div>
-            )}
           </div>
         ) : (
           <div className="py-8">
@@ -180,6 +193,10 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
           onClick={(e) => {
             e.stopPropagation();
             setPreview(null);
+            if (objectUrl) {
+              URL.revokeObjectURL(objectUrl);
+              setObjectUrl(null);
+            }
             onImageUpload('');
           }}
           className="mt-2 text-sm text-red-600 hover:text-red-800"

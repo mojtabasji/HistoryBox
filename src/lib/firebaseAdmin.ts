@@ -1,4 +1,4 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, applicationDefault } from 'firebase-admin/app';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 
 function sanitizePrivateKey(key: string | undefined): string | undefined {
@@ -44,14 +44,19 @@ export function getServerAuth(): Auth {
     if (!privateKey) missing.push('FIREBASE_PRIVATE_KEY');
 
     if (missing.length) {
-      throw new Error(
-        `Firebase Admin not configured. Missing: ${missing.join(', ')}. Add these in your environment (Vercel/Local).`
-      );
+      // Try application default credentials as a last resort (useful on GCP)
+      try {
+        initializeApp({ credential: applicationDefault() });
+      } catch {
+        throw new Error(
+          `Firebase Admin not configured. Missing: ${missing.join(', ')}. Set FIREBASE_SERVICE_ACCOUNT (JSON) or individual vars.`
+        );
+      }
+    } else {
+      initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey: privateKey! }),
+      });
     }
-
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey: privateKey! }),
-    });
   }
   return getAuth();
 }
