@@ -1,23 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { findOrCreateRegion } from '../../../lib/geohash';
-import { getAuth } from 'firebase-admin/auth';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getServerAuth } from '@/lib/firebaseAdmin';
 
 export const runtime = 'nodejs';
-
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (projectId && clientEmail && privateKey) {
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    });
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,12 +21,14 @@ export async function POST(request: NextRequest) {
     // Verify the Firebase token
     let decodedToken;
     try {
-  decodedToken = await getAuth().verifyIdToken(token);
+      decodedToken = await getServerAuth().verifyIdToken(token);
     } catch (error) {
       console.error('Token verification failed:', error);
+      const message = error instanceof Error ? error.message : 'Invalid token';
+      const status = message.includes('Firebase Admin not configured') ? 500 : 401;
       return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
+        { error: message.includes('Firebase Admin not configured') ? 'Server auth not configured' : 'Invalid token' },
+        { status }
       );
     }
 
@@ -162,12 +150,14 @@ export async function GET(request: NextRequest) {
 
     let decodedToken;
     try {
-      decodedToken = await getAuth().verifyIdToken(token);
+      decodedToken = await getServerAuth().verifyIdToken(token);
     } catch (error) {
       console.error('Token verification failed:', error);
+      const message = error instanceof Error ? error.message : 'Invalid token';
+      const status = message.includes('Firebase Admin not configured') ? 500 : 401;
       return NextResponse.json(
-        { error: 'Server auth not configured or invalid token' },
-        { status: 500 }
+        { error: message.includes('Firebase Admin not configured') ? 'Server auth not configured' : 'Invalid token' },
+        { status }
       );
     }
 

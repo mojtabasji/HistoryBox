@@ -37,14 +37,17 @@ export default function Dashboard() {
       setLoadingMemories(true);
       setError(null);
       try {
-        const token = await user.getIdToken();
+        const token = await user.getIdToken(true);
         const res = await fetch('/api/memories', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load memories');
+        if (!res.ok) {
+          const prefix = res.status === 401 ? 'Auth error' : 'Server error';
+          throw new Error(`${prefix}: ${data.error || 'Failed to load memories'}`);
+        }
         setMemories(data.memories || []);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load memories');

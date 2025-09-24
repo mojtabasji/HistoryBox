@@ -64,7 +64,7 @@ export default function AddMemory() {
     
     try {
       // Get Firebase auth token
-      const token = await user.getIdToken();
+  const token = await user.getIdToken(true);
       
       // Send memory data to API
       const response = await fetch('/api/memories', {

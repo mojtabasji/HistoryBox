@@ -150,14 +150,13 @@ export default function MapView() {
             </div>
           )}
 
-          {/* Instructions */}
+          {/* Notes */}
           <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="text-blue-800 font-medium mb-2">🗺️ Getting Started with Google Maps</h4>
+            <h4 className="text-blue-800 font-medium mb-2">🗺️ About the Map</h4>
             <div className="text-blue-700 text-sm space-y-1">
-              <p>• Get a Google Maps API key from the Google Cloud Console</p>
-              <p>• Enable &quot;Maps JavaScript API&quot; and &quot;Places API&quot;</p>
-              <p>• Add your API key to your environment variables as NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</p>
-              <p>• Restart your development server after adding the API key</p>
+              <p>• This map uses Leaflet with OpenStreetMap tiles. No API key required.</p>
+              <p>• Click a marker to see details of that memory.</p>
+              <p>• Coming soon: show your real uploaded memories on the map.</p>
             </div>
           </div>
         </div>

@@ -16,6 +16,10 @@ const requiredVars = [
 const optionalVars = [
   'NEXT_PUBLIC_GOOGLE_MAPS_API_KEY',
   'NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID',
+  'FIREBASE_SERVICE_ACCOUNT',
+  'FIREBASE_PROJECT_ID',
+  'FIREBASE_CLIENT_EMAIL',
+  'FIREBASE_PRIVATE_KEY',
 ];
 
 console.log('🔍 Validating Environment Configuration...\n');

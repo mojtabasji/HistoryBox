@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import Image from 'next/image';
 
 interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void;
@@ -130,11 +129,10 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
 
         {preview ? (
           <div className="relative">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={preview}
               alt="Preview"
-              width={300}
-              height={200}
               className="mx-auto rounded-lg object-cover max-h-48"
             />
             {!uploading && (

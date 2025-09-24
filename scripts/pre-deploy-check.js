@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable */
 
 // Pre-deployment validation script
 console.log('🔍 Pre-Deployment Validation for Vercel...\n');
@@ -50,7 +51,7 @@ const requiredDeps = [
   'react',
   'react-dom',
   'firebase',
-  '@react-google-maps/api',
+  'firebase-admin',
   'cloudinary'
 ];
 
@@ -86,7 +87,10 @@ console.log('   • NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
 console.log('   • NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID');
 console.log('   • NEXT_PUBLIC_FIREBASE_APP_ID');
 console.log('   • NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID');
-console.log('   • NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
+console.log('   • FIREBASE_SERVICE_ACCOUNT (JSON)  OR:');
+console.log('       • FIREBASE_PROJECT_ID');
+console.log('       • FIREBASE_CLIENT_EMAIL');
+console.log('       • FIREBASE_PRIVATE_KEY');
 console.log('   • CLOUDINARY_CLOUD_NAME');
 console.log('   • CLOUDINARY_API_KEY');
 console.log('   • CLOUDINARY_API_SECRET');
