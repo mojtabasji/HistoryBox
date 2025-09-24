@@ -104,7 +104,11 @@ export default function LocationPicker({
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <ClickHandler onPick={handlePick} />
         {selectedLocation && (
-          <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={defaultIcon ?? undefined} />
+          defaultIcon ? (
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={defaultIcon} />
+          ) : (
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
+          )
         )}
       </LeafletMap>
       {selectedLocation && (

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type Memory = {
   id: number;
@@ -84,12 +85,12 @@ export default function Dashboard() {
               <h1 className="text-xl font-semibold text-gray-900">History Box</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <a 
-                href="/map" 
+              <Link 
+                href="/" 
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 View Map
-              </a>
+              </Link>
               <span className="text-gray-700">Welcome, {user.email}</span>
               <button
                 onClick={handleLogout}
@@ -107,12 +108,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Your Memories</h2>
             <div className="space-x-2">
-              <a
-                href="/map"
+              <Link
+                href="/"
                 className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Explore Map
-              </a>
+              </Link>
               <a
                 href="/add-memory"
                 className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"

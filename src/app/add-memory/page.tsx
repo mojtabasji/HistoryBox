@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 import ImageUpload from '../../components/ImageUpload';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -129,9 +130,9 @@ export default function AddMemory() {
                 <a href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                   Dashboard
                 </a>
-                <a href="/map" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
+                <Link href="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
                   Map View
-                </a>
+                </Link>
                 <a href="/add-memory" className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
                   Add Memory
                 </a>

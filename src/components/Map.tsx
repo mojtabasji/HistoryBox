@@ -85,18 +85,33 @@ export default function Map({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         {posts.map((post) => (
-          <Marker key={post.id} position={[post.latitude, post.longitude]} icon={defaultIcon ?? undefined} eventHandlers={{ click: () => handleMarkerClick(post) }}>
-            <Popup>
-              <div className="p-1 max-w-xs">
-                <h3 className="font-semibold text-base mb-1">{post.title || `Post ${post.id}`}</h3>
-                {post.date && <p className="text-xs text-gray-600 mb-1">{post.date}</p>}
-                {post.description && <p className="text-xs mb-2">{post.description}</p>}
-                {post.imageUrl && (
-                  <Image src={post.imageUrl} alt={post.title || 'Post image'} width={200} height={128} className="w-full h-32 object-cover rounded" />
-                )}
-              </div>
-            </Popup>
-          </Marker>
+          (defaultIcon ? (
+            <Marker key={post.id} position={[post.latitude, post.longitude]} icon={defaultIcon} eventHandlers={{ click: () => handleMarkerClick(post) }}>
+              <Popup>
+                <div className="p-1 max-w-xs">
+                  <h3 className="font-semibold text-base mb-1">{post.title || `Post ${post.id}`}</h3>
+                  {post.date && <p className="text-xs text-gray-600 mb-1">{post.date}</p>}
+                  {post.description && <p className="text-xs mb-2">{post.description}</p>}
+                  {post.imageUrl && (
+                    <Image src={post.imageUrl} alt={post.title || 'Post image'} width={200} height={128} className="w-full h-32 object-cover rounded" />
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ) : (
+            <Marker key={post.id} position={[post.latitude, post.longitude]} eventHandlers={{ click: () => handleMarkerClick(post) }}>
+              <Popup>
+                <div className="p-1 max-w-xs">
+                  <h3 className="font-semibold text-base mb-1">{post.title || `Post ${post.id}`}</h3>
+                  {post.date && <p className="text-xs text-gray-600 mb-1">{post.date}</p>}
+                  {post.description && <p className="text-xs mb-2">{post.description}</p>}
+                  {post.imageUrl && (
+                    <Image src={post.imageUrl} alt={post.title || 'Post image'} width={200} height={128} className="w-full h-32 object-cover rounded" />
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          ))
         ))}
       </LeafletMap>
     </div>

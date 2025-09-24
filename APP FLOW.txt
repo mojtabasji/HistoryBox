@@ -1,0 +1,52 @@
+🌍 For non-registered users (new visitors):
+
+First thing they should see:
+A world map with locked regions + counters → this creates curiosity.
+Example: “There are 18 hidden photos in Tehran” (but blurred/locked).
+
+CTA options on first page:
+
+🔓 Unlock this region → prompts login + payment.
+
+📝 Sign up to contribute → clear button.
+
+👀 Maybe allow 1 free teaser photo per region to spark curiosity.
+
+⚠️ If you show the login page first, many users will bounce. Instead, tease the content → then funnel them into login.
+
+👤 For logged-in users:
+
+First page should also be the map (same experience).
+
+But unlocked regions show real photos (grid or pop-up).
+
+They get extra options:
+
+➕ Post a photo (upload + caption + location).
+
+⭐ See their profile + contributed posts.
+
+💳 Manage unlocks/payments.
+
+✅ Suggested Flow
+
+Visitor opens site → sees map with curiosity counters.
+
+Click on a locked region → modal appears: “This region has 12 hidden photos. Unlock to see them.”
+
+Button: Unlock Now (login required) → goes to signup/login.
+
+After login:
+
+If region is paid → show payment flow.
+
+If already unlocked → show full gallery.
+
+Logged-in users can also:
+
+Post their own photo.
+
+See their unlocked history.
+
+📌 In one line:
+👉 Always start with the map for everyone. Use curiosity (locked photos + counts) to drive them into login and payments.
