@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
-import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import React, { useCallback, useMemo, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
+import L, { LeafletMouseEvent } from 'leaflet';
+import marker1x from 'leaflet/dist/images/marker-icon.png';
+import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import { MapContainer as LeafletMap, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 
 interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
@@ -9,15 +14,32 @@ interface LocationPickerProps {
   className?: string;
 }
 
-const containerStyle = {
-  width: '100%',
-  height: '400px'
-};
+// const containerStyle = { width: '100%', height: '400px' };
 
 const defaultCenter = {
   lat: 40.7128,
   lng: -74.0060
 };
+
+// Fix default marker icons path when bundling
+const DefaultIcon = L.icon({
+  iconUrl: (marker1x as unknown as string),
+  iconRetinaUrl: (marker2x as unknown as string),
+  shadowUrl: (markerShadow as unknown as string),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+function ClickHandler({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click(e: LeafletMouseEvent) {
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
 
 export default function LocationPicker({ 
   onLocationSelect, 
@@ -28,102 +50,39 @@ export default function LocationPicker({
     initialLocation
   );
 
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places']
-  });
+  const style = useMemo(() => ({ width: '100%', height: '400px' }), []);
 
-  const handleMapClick = useCallback((event: google.maps.MapMouseEvent) => {
-    if (event.latLng) {
-      const location = {
-        lat: event.latLng.lat(),
-        lng: event.latLng.lng()
-      };
-      setSelectedLocation(location);
-      
-      // Optional: Reverse geocoding to get address
-      if (window.google && window.google.maps) {
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ location }, (results, status) => {
-          if (status === 'OK' && results && results[0]) {
-            onLocationSelect({
-              ...location,
-              address: results[0].formatted_address
-            });
-          } else {
-            onLocationSelect(location);
-          }
-        });
-      } else {
-        onLocationSelect(location);
+  const handlePick = useCallback(async (lat: number, lng: number) => {
+    const location = { lat, lng };
+    setSelectedLocation(location);
+
+    // Optional reverse geocoding via Nominatim (rate-limited)
+    let address: string | undefined;
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`,
+        { headers: { 'User-Agent': 'history_box/1.0' } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        address = data.display_name;
       }
+    } catch {
+      // ignore
     }
+    onLocationSelect({ ...location, address });
   }, [onLocationSelect]);
-
-  const onLoad = useCallback(() => {
-    // Map loaded successfully
-  }, []);
-
-  const onUnmount = useCallback(() => {
-    // Map unmounted
-  }, []);
-
-  if (!isLoaded) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`} style={containerStyle}>
-        <div className="text-center">
-          <div className="text-gray-600 mb-2">Loading map...</div>
-          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-    return (
-      <div className={`flex items-center justify-center bg-gray-100 rounded-lg ${className}`} style={containerStyle}>
-        <div className="text-center p-6">
-          <div className="text-red-600 mb-2">⚠️ Google Maps API Key Required</div>
-          <div className="text-gray-600 text-sm">
-            Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your environment variables
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={className}>
       <div className="mb-2">
-        <p className="text-sm text-gray-600">
-          Click on the map to select a location for your memory
-        </p>
+        <p className="text-sm text-gray-600">Click on the map to select a location for your memory</p>
       </div>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={selectedLocation || initialLocation}
-        zoom={10}
-        onLoad={onLoad}
-        onUnmount={onUnmount}
-        onClick={handleMapClick}
-        options={{
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: true,
-          fullscreenControl: false,
-        }}
-      >
-        {selectedLocation && (
-          <Marker
-            position={selectedLocation}
-            icon={{
-              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-              scaledSize: new window.google.maps.Size(32, 32)
-            }}
-          />
-        )}
-      </GoogleMap>
+      <LeafletMap center={[selectedLocation?.lat ?? initialLocation.lat, selectedLocation?.lng ?? initialLocation.lng]} zoom={10} style={style} scrollWheelZoom>
+        <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <ClickHandler onPick={handlePick} />
+        {selectedLocation && <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={DefaultIcon} />}
+      </LeafletMap>
       {selectedLocation && (
         <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-600">
           Selected: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}

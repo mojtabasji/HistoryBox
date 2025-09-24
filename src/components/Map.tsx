@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import Image from 'next/image';
-import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
+import dynamic from 'next/dynamic';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import marker1x from 'leaflet/dist/images/marker-icon.png';
+import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
 
 export interface Post {
   id: string;
@@ -22,15 +32,23 @@ interface MapProps {
   className?: string;
 }
 
-const containerStyle = {
-  width: '100%',
-  height: '80vh'
-};
+// const containerStyle = { width: '100%', height: '80vh' };
 
 const defaultCenter = {
   lat: 40.7128, // New York City
   lng: -74.0060
 };
+
+// Fix default marker icons path when bundling
+const DefaultIcon = L.icon({
+  iconUrl: marker1x as unknown as string,
+  iconRetinaUrl: marker2x as unknown as string,
+  shadowUrl: markerShadow as unknown as string,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 export default function Map({ 
   posts, 
@@ -39,108 +57,34 @@ export default function Map({
   onMarkerClick,
   className = ''
 }: MapProps) {
-  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places']
-  });
-
   const handleMarkerClick = useCallback((post: Post) => {
-    setSelectedPost(post);
     onMarkerClick?.(post);
   }, [onMarkerClick]);
 
-  const handleInfoWindowClose = useCallback(() => {
-    setSelectedPost(null);
-  }, []);
-
-  if (!isLoaded) {
-    return (
-      <div className={`w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg ${className}`}>
-        <div className="text-center">
-          <div className="text-gray-600 mb-2">Loading map...</div>
-          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
-    return (
-      <div className={`w-full h-[80vh] flex items-center justify-center bg-gray-100 rounded-lg ${className}`}>
-        <div className="text-center p-6">
-          <div className="text-red-600 mb-2">⚠️ Google Maps API Key Required</div>
-          <div className="text-gray-600 text-sm">
-            Please add NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to your environment variables
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const mapStyle = useMemo(() => ({ width: '100%', height: '80vh' }), []);
 
   return (
     <div className={className}>
-      <GoogleMap
-        mapContainerStyle={containerStyle}
-        center={center}
-        zoom={zoom}
-        options={{
-          zoomControl: true,
-          streetViewControl: false,
-          mapTypeControl: true,
-          fullscreenControl: true,
-          styles: [
-            {
-              featureType: 'poi',
-              elementType: 'labels',
-              stylers: [{ visibility: 'off' }]
-            }
-          ]
-        }}
-      >
+      <LeafletMap center={[center.lat, center.lng]} zoom={zoom} style={mapStyle} scrollWheelZoom>
+        <TileLayer
+          attribution='&copy; OpenStreetMap contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
         {posts.map((post) => (
-          <Marker
-            key={post.id}
-            position={{ lat: post.latitude, lng: post.longitude }}
-            title={post.title || `Post ${post.id}`}
-            onClick={() => handleMarkerClick(post)}
-            icon={{
-              url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
-              scaledSize: new window.google.maps.Size(32, 32)
-            }}
-          />
+          <Marker key={post.id} position={[post.latitude, post.longitude]} icon={DefaultIcon} eventHandlers={{ click: () => handleMarkerClick(post) }}>
+            <Popup>
+              <div className="p-1 max-w-xs">
+                <h3 className="font-semibold text-base mb-1">{post.title || `Post ${post.id}`}</h3>
+                {post.date && <p className="text-xs text-gray-600 mb-1">{post.date}</p>}
+                {post.description && <p className="text-xs mb-2">{post.description}</p>}
+                {post.imageUrl && (
+                  <Image src={post.imageUrl} alt={post.title || 'Post image'} width={200} height={128} className="w-full h-32 object-cover rounded" />
+                )}
+              </div>
+            </Popup>
+          </Marker>
         ))}
-        
-        {selectedPost && (
-          <InfoWindow
-            position={{ lat: selectedPost.latitude, lng: selectedPost.longitude }}
-            onCloseClick={handleInfoWindowClose}
-          >
-            <div className="p-2 max-w-xs">
-              <h3 className="font-semibold text-lg mb-1">
-                {selectedPost.title || 'Untitled Post'}
-              </h3>
-              {selectedPost.date && (
-                <p className="text-sm text-gray-600 mb-2">{selectedPost.date}</p>
-              )}
-              {selectedPost.description && (
-                <p className="text-sm mb-2">{selectedPost.description}</p>
-              )}
-              {selectedPost.imageUrl && (
-                <Image 
-                  src={selectedPost.imageUrl} 
-                  alt={selectedPost.title || 'Post image'}
-                  width={200}
-                  height={128}
-                  className="w-full h-32 object-cover rounded"
-                />
-              )}
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+      </LeafletMap>
     </div>
   );
 }
