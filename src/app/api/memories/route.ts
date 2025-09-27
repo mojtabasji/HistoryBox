@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { findOrCreateRegion } from '../../../lib/geohash';
+import { calculateGeohash } from '@/lib/geohash';
 import { getSupabaseServer } from '@/lib/supabaseServer';
 // Auth is resolved by delegating to our Edge route /api/auth/me to avoid Node cookies() issues in Next 15
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+async function ensureUser(email: string, sub?: string) {
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        firebaseUid: sub || undefined,
+        email,
+        username: email.split('@')[0],
+      },
+    });
+  } else if (!user.firebaseUid && sub) {
+    user = await prisma.user.update({ where: { id: user.id }, data: { firebaseUid: sub } });
+  }
+  return user;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,20 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find or create user in our database
-    let user = await prisma.user.findUnique({ where: { email } });
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          firebaseUid: sub || undefined,
-          email,
-          username: email.split('@')[0], // Use email prefix as username
-        }
-      });
-    } else if (!user.firebaseUid && sub) {
-      // Backfill auth0 sub to firebaseUid column (reused as external id)
-      user = await prisma.user.update({ where: { id: user.id }, data: { firebaseUid: sub } });
-    }
+    const user = await ensureUser(email, sub);
 
     // Parse the request body
     const body = await request.json();
@@ -58,8 +61,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find or create region for this location
-    const region = await findOrCreateRegion(latitude, longitude, prisma);
+    // Compute region hash (precision 5) and find or create region
+    const regionHash = calculateGeohash(latitude, longitude, 5);
+    let region = await prisma.region.findUnique({ where: { geohash: regionHash } });
+    if (!region) {
+      region = await prisma.region.create({ data: { geohash: regionHash, hash: regionHash, postCount: 0 } });
+    }
 
     // Parse the memory date if provided
     let memoryDate = null;
@@ -74,30 +81,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the memory post (primary store via Prisma)
-    const post = await prisma.post.create({
-      data: {
-        title,
-        description,
-        imageUrl,
-        latitude,
-        longitude,
-        address,
-        memoryDate,
-        userId: user.id,
-        regionId: region.id,
-        caption: description || title, // Fallback for backward compatibility
+  const post = await prisma.post.create({
+    data: {
+      title,
+      description,
+      imageUrl,
+      latitude,
+      longitude,
+      address,
+      memoryDate,
+      userId: user.id,
+      regionId: region.id,
+      regionHash: regionHash,
+      caption: description || title, // Fallback for backward compatibility
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          email: true,
+          username: true
+        }
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            username: true
-          }
-        },
-        region: true
-      }
-    });
+      region: true
+    }
+  });
 
     // Update region post count
     await prisma.region.update({
@@ -183,18 +191,7 @@ export async function GET(request: NextRequest) {
     if (!email) return NextResponse.json({ error: 'Email not found' }, { status: 400 });
 
     // Find or create user (creation ensures a row exists for new users)
-    let user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          firebaseUid: sub || undefined,
-          email,
-          username: email.split('@')[0],
-        },
-      });
-    } else if (!user.firebaseUid && sub) {
-      user = await prisma.user.update({ where: { id: user.id }, data: { firebaseUid: sub } });
-    }
+    const user = await ensureUser(email, sub);
 
     const posts = await prisma.post.findMany({
       where: { userId: user.id },

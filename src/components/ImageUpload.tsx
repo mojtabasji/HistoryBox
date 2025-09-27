@@ -22,7 +22,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   // Restore temporary preview if component remounts during the same session
   useEffect(() => {
     try {
-      const saved = typeof window !== 'undefined' ? sessionStorage.getItem('hb_local_preview') : null;
+      const saved = typeof window !== 'undefined' ? sessionStorage.getItem('hb_local_preview_url') : null;
       if (saved && !currentImage) {
         setPreview(saved);
         setPreviewSource('local');
@@ -67,18 +67,28 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
     setObjectUrl(previewUrl);
     setPreview(previewUrl);
     setPreviewSource('local');
-    // Start upload in background
-    uploadImage(file);
+    // Save blob url (small string) to survive Fast Refresh remounts during dev
+    try { if (typeof window !== 'undefined') sessionStorage.setItem('hb_local_preview_url', previewUrl); } catch {}
+
+    // Generate base64 immediately so if the component remounts, we can restore from sessionStorage
+    void convertToBase64(file)
+      .then((b64) => {
+        // Kick off upload as soon as we have base64, reuse it to avoid double work
+        void uploadImage(file, b64);
+      })
+      .catch(() => {
+        // Even if base64 generation fails (rare), still attempt upload which will try again
+        void uploadImage(file);
+      });
   };
 
-  const uploadImage = async (file: File) => {
+  const uploadImage = async (file: File, base64FromSelect?: string) => {
     setUploading(true);
     
     try {
-      // Convert file to base64
-      const base64 = await convertToBase64(file);
-      // Save base64 preview in session to survive remounts
-      try { if (typeof window !== 'undefined') sessionStorage.setItem('hb_local_preview', base64); } catch {}
+      // Get base64 (use cached one from selection if available)
+      const base64 = base64FromSelect ?? await convertToBase64(file);
+  // We've already stored a blob URL for preview; no need to store large base64 in sessionStorage
       
       // Upload to Cloudinary
       const response = await fetch('/api/upload', {
@@ -90,8 +100,14 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Upload failed');
+        let message = 'Upload failed';
+        try {
+          const error = await response.json();
+          message = error?.error || message;
+        } catch {
+          try { message = await response.text(); } catch {}
+        }
+        throw new Error(message);
       }
 
       const { url } = await response.json();
@@ -103,8 +119,8 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
         setObjectUrl(null);
       }
       setUploadError(null);
-      // Clear temporary preview from session (we have a stable remote URL now)
-      try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview'); } catch {}
+  // Clear temporary blob preview from session (we have a stable remote URL now)
+  try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview_url'); } catch {}
       
     } catch (error) {
       console.error('Upload error:', error);
@@ -149,17 +165,18 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
     const files = e.target.files;
     if (files && files.length > 0) {
       handleFileSelect(files[0]);
+      // Reset input value so selecting the same file again triggers onChange
+      // Some browsers won't fire change if the value didn't change
+      try { e.target.value = ''; } catch {}
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
+  // overlay input handles clicks; no separate click handler needed
 
   return (
     <div className={className}>
       <div
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           dragOver
             ? 'border-indigo-500 bg-indigo-50'
             : 'border-gray-300 hover:border-gray-400'
@@ -167,14 +184,21 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onClick={handleClick}
       >
+        {/* Invisible file input overlay to ensure native click works reliably */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileInputChange}
-          className="hidden"
+          onClick={(e) => {
+            // Allow reselecting the same file
+            // Reset before the click opens the picker to ensure change fires
+            const input = e.currentTarget as HTMLInputElement;
+            try { input.value = ''; } catch {}
+          }}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          aria-label="Upload image"
         />
 
         {preview ? (
@@ -187,7 +211,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
             />
           </div>
         ) : (
-          <div className="py-8">
+          <div className="py-8 pointer-events-none">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               stroke="currentColor"
@@ -261,7 +285,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       {/* Clear temporary preview if user removes image */}
       {preview === null && (
         <span className="sr-only" aria-hidden="true">
-          {(() => { try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview'); } catch {} return null; })()}
+          {(() => { try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview_url'); } catch {} return null; })()}
         </span>
       )}
     </div>
