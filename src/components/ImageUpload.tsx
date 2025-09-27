@@ -13,16 +13,37 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [lastFile, setLastFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  // Track where preview came from: 'prop' (parent URL), 'remote' (uploaded URL), 'local' (object URL)
+  const [previewSource, setPreviewSource] = useState<'prop' | 'remote' | 'local' | null>(currentImage ? 'prop' : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore temporary preview if component remounts during the same session
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? sessionStorage.getItem('hb_local_preview') : null;
+      if (saved && !currentImage) {
+        setPreview(saved);
+        setPreviewSource('local');
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep preview in sync if parent passes a new URL
   useEffect(() => {
-    if (currentImage && currentImage !== preview) {
+    // If parent provides a new image URL, adopt it as the preview
+    if (currentImage) {
       setPreview(currentImage);
+      setPreviewSource('prop');
+      setUploadError(null);
+      return;
     }
-    if (!currentImage && preview && !objectUrl) {
-      // no external image and not a blob -> clear
+    // If parent cleared the image, only clear preview if it's not a local selection
+    if (!currentImage && previewSource !== 'local') {
       setPreview(null);
+      setPreviewSource(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentImage]);
@@ -38,6 +59,15 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       return;
     }
 
+    setLastFile(file);
+    setUploadError(null);
+    // Create immediate local preview
+    const previewUrl = URL.createObjectURL(file);
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    setObjectUrl(previewUrl);
+    setPreview(previewUrl);
+    setPreviewSource('local');
+    // Start upload in background
     uploadImage(file);
   };
 
@@ -47,14 +77,9 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
     try {
       // Convert file to base64
       const base64 = await convertToBase64(file);
+      // Save base64 preview in session to survive remounts
+      try { if (typeof window !== 'undefined') sessionStorage.setItem('hb_local_preview', base64); } catch {}
       
-      // Create preview
-  const previewUrl = URL.createObjectURL(file);
-  // Track and cleanup previous object URL if any
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  setObjectUrl(previewUrl);
-  setPreview(previewUrl);
-
       // Upload to Cloudinary
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -72,15 +97,20 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       const { url } = await response.json();
       onImageUpload(url);
       setPreview(url);
+      setPreviewSource('remote');
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
         setObjectUrl(null);
       }
+      setUploadError(null);
+      // Clear temporary preview from session (we have a stable remote URL now)
+      try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview'); } catch {}
       
     } catch (error) {
       console.error('Upload error:', error);
-      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      setPreview(currentImage || null);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      setUploadError(msg);
+      // Keep local preview so user can retry, do not clear
     } finally {
       setUploading(false);
     }
@@ -178,12 +208,36 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
           </div>
         )}
 
-        {uploading && (
+        {(uploading || uploadError) && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-2 text-sm text-gray-600">Uploading...</p>
-            </div>
+            {!uploadError ? (
+              <div className="flex flex-col items-center">
+                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-2 text-sm text-gray-600">Uploading...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center max-w-xs text-center">
+                <div className="text-sm text-red-600 font-medium">Upload failed</div>
+                <div className="text-xs text-gray-600 mt-1">{uploadError}</div>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); if (lastFile) uploadImage(lastFile); }}
+                    className="px-3 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                    disabled={!lastFile}
+                  >
+                    Retry
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setUploadError(null); }}
+                    className="px-3 py-1 text-xs rounded bg-white border hover:bg-gray-50"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -203,6 +257,12 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
         >
           Remove image
         </button>
+      )}
+      {/* Clear temporary preview if user removes image */}
+      {preview === null && (
+        <span className="sr-only" aria-hidden="true">
+          {(() => { try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview'); } catch {} return null; })()}
+        </span>
       )}
     </div>
   );

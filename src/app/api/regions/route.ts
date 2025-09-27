@@ -19,6 +19,8 @@ export async function GET() {
             latitude: true,
             longitude: true,
             imageUrl: true,
+            title: true,
+            description: true,
           },
         },
       },
@@ -29,7 +31,7 @@ export async function GET() {
       id: number;
       geohash: string;
       postCount: number;
-      posts: { id: number; latitude: number; longitude: number; imageUrl: string }[];
+      posts: { id: number; latitude: number; longitude: number; imageUrl: string; title: string; description: string | null }[];
     };
 
     const payload = (regions as RegionRow[])
@@ -45,6 +47,8 @@ export async function GET() {
             latitude: p.latitude,
             longitude: p.longitude,
             imageUrl: p.imageUrl,
+            title: p.title,
+            description: p.description,
           },
         };
       });

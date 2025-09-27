@@ -7,9 +7,18 @@ import dynamic from 'next/dynamic';
 import marker1x from 'leaflet/dist/images/marker-icon.png';
 import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import SearchControl from './SearchControl';
 const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
 const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false });
+const UseMap = dynamic(async () => {
+  const { useMap } = await import('react-leaflet');
+  return function MapInstanceSetter({ onReady }: { onReady: (map: import('leaflet').Map) => void }) {
+    const map = useMap();
+    useEffect(() => { onReady(map); }, [map, onReady]);
+    return null;
+  };
+}, { ssr: false });
 
 interface LocationPickerProps {
   onLocationSelect: (location: { lat: number; lng: number; address?: string }) => void;
@@ -72,6 +81,7 @@ export default function LocationPicker({
   );
 
   const style = useMemo(() => ({ width: '100%', height: '400px' }), []);
+  const [mapInstance, setMapInstance] = useState<import('leaflet').Map | null>(null);
   const defaultIcon = useLeafletDefaultIcon();
 
   const handlePick = useCallback(async (lat: number, lng: number) => {
@@ -100,7 +110,24 @@ export default function LocationPicker({
       <div className="mb-2">
         <p className="text-sm text-gray-600">Click on the map to select a location for your memory</p>
       </div>
-      <LeafletMap center={[selectedLocation?.lat ?? initialLocation.lat, selectedLocation?.lng ?? initialLocation.lng]} zoom={10} style={style} scrollWheelZoom>
+      {/* Search box for address/place lookup */}
+      <div className="mb-3">
+        <SearchControl map={mapInstance} placeholder="Search address or place…" />
+      </div>
+      <LeafletMap
+        center={[selectedLocation?.lat ?? initialLocation.lat, selectedLocation?.lng ?? initialLocation.lng]}
+        zoom={10}
+        minZoom={2}
+        maxZoom={19}
+        style={style}
+        scrollWheelZoom
+        maxBounds={[[-85, -180], [85, 180]]}
+        maxBoundsViscosity={1.0}
+        worldCopyJump={false}
+        inertia={false}
+        touchZoom={'center'}
+      >
+        <UseMap onReady={setMapInstance} />
         <TileLayer attribution='&copy; OpenStreetMap contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <ClickHandler onPick={handlePick} />
         {selectedLocation && (
