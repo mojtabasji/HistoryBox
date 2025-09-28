@@ -71,16 +71,14 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
     }
 
     // Handle region change if lat/lon changed
-    let regionId = existing.regionId;
-    let regionHash: string | undefined;
+  let regionId = existing.regionId;
     const latChanged = typeof latitude === 'number' && latitude !== existing.latitude;
     const lonChanged = typeof longitude === 'number' && longitude !== existing.longitude;
     if (latChanged || lonChanged) {
       const newLat = typeof latitude === 'number' ? latitude : existing.latitude;
       const newLon = typeof longitude === 'number' ? longitude : existing.longitude;
-      const region = await findOrCreateRegion(newLat, newLon, prisma);
-      regionId = region.id;
-  regionHash = 'geohash' in region ? (region as { geohash: string }).geohash : (region as unknown as { geohash: string }).geohash;
+    const region = await findOrCreateRegion(newLat, newLon, prisma);
+    regionId = region.id;
     }
 
     const updated = await prisma.post.update({
@@ -95,7 +93,6 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
         address: typeof address === 'string' ? address : undefined,
         memoryDate,
         regionId,
-        ...(regionHash ? { regionHash } : {}),
       },
     });
 

@@ -80,32 +80,40 @@ export async function POST(request: NextRequest) {
     }
 
     // Create the memory post (primary store via Prisma)
-    const post = await prisma.post.create({
-      data: {
-        title,
-        description,
-        imageUrl,
-        latitude,
-        longitude,
-        address,
-        memoryDate,
-        userId: user.id,
-        regionId: region.id,
-  // Align with legacy/client schema requiring regionHash: prefer region.geohash
-  regionHash: 'geohash' in region ? (region as { geohash: string }).geohash : (region as unknown as { geohash: string }).geohash,
-        caption: description || title, // Fallback for backward compatibility
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            username: true
-          }
-        },
-        region: true
-      }
-    });
+    // Be resilient to schema variants: some deployments may require a regionHash column on Post, others may not.
+    const baseData: Record<string, unknown> = {
+      title,
+      description,
+      imageUrl,
+      latitude,
+      longitude,
+      address,
+      memoryDate,
+      user: { connect: { id: user.id } },
+      region: { connect: { id: region.id } },
+      caption: description || title,
+    };
+
+    const include = {
+      user: { select: { id: true, email: true, username: true } },
+      region: true,
+    } as const;
+
+    let post: unknown;
+    try {
+      post = await (prisma.post as unknown as {
+        create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
+      }).create({ data: baseData, include });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const needsRegionHash = /Argument\s+`?regionHash`?\s+is\s+missing|Missing\s+required\s+value.*regionHash/i.test(msg);
+      if (!needsRegionHash) throw err;
+      const geohash = (region as unknown as { geohash?: string })?.geohash;
+      const withHash: Record<string, unknown> = { ...baseData, regionHash: geohash };
+      post = await (prisma.post as unknown as {
+        create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
+      }).create({ data: withHash, include });
+    }
 
     // Update region post count
     await prisma.region.update({
@@ -139,7 +147,7 @@ export async function POST(request: NextRequest) {
           .from('memories')
           .insert({
             user_id: sbUser.id,
-            prisma_post_id: post.id,
+            prisma_post_id: (post as { id: number }).id,
             title,
             description,
             image_url: imageUrl,
