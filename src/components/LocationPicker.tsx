@@ -84,6 +84,26 @@ export default function LocationPicker({
   const [mapInstance, setMapInstance] = useState<import('leaflet').Map | null>(null);
   const defaultIcon = useLeafletDefaultIcon();
 
+  // Keep internal selection in sync when parent updates initialLocation (e.g., after async load)
+  useEffect(() => {
+    if (
+      initialLocation &&
+      (!selectedLocation ||
+        selectedLocation.lat !== initialLocation.lat ||
+        selectedLocation.lng !== initialLocation.lng)
+    ) {
+      setSelectedLocation({ lat: initialLocation.lat, lng: initialLocation.lng });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialLocation.lat, initialLocation.lng]);
+
+  // Recenter the map when the selectedLocation changes
+  useEffect(() => {
+    if (mapInstance && selectedLocation) {
+      mapInstance.setView([selectedLocation.lat, selectedLocation.lng]);
+    }
+  }, [mapInstance, selectedLocation]);
+
   const handlePick = useCallback(async (lat: number, lng: number) => {
     const location = { lat, lng };
     setSelectedLocation(location);

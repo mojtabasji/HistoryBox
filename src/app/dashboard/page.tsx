@@ -159,6 +159,34 @@ export default function Dashboard() {
                     </span>
                     <span>Lat: {m.latitude.toFixed(3)}, Lng: {m.longitude.toFixed(3)}</span>
                   </div>
+                  <div className="mt-4 flex items-center justify-end space-x-2">
+                    <Link
+                      href={`/edit-memory/${m.id}`}
+                      className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Delete this memory? This cannot be undone.')) return;
+                        const prev = memories;
+                        setMemories((list) => list.filter((x) => x.id !== m.id));
+                        try {
+                          const res = await fetch(`/api/memories/${m.id}`, { method: 'DELETE' });
+                          if (!res.ok) {
+                            const data = await res.json().catch(() => ({}));
+                            throw new Error(data.error || 'Failed to delete');
+                          }
+                        } catch (e) {
+                          alert(e instanceof Error ? e.message : 'Failed to delete');
+                          setMemories(prev);
+                        }
+                      }}
+                      className="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
