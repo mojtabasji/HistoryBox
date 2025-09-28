@@ -66,17 +66,20 @@ export async function findOrCreateRegion(latitude: number, longitude: number, pr
   if (region) return region;
 
   // 2) Create region; prefer setting legacy `hash` if some deployments require it
+  try {
+    return await prisma.region.create({ data: { geohash, postCount: 0 } });
+  } catch {
+    // If DB requires a legacy `hash` column, try again by passing it through a narrow any-escape
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const prismaAny = prisma as any;
     try {
-      return await prisma.region.create({ data: { geohash, postCount: 0 } });
-    } catch {
-      // If DB requires a legacy `hash` column, try again by passing it through a narrow any-escape
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const prismaAny = prisma as any;
-      try {
-        return await prismaAny.region.create({ data: { geohash, postCount: 0, hash: geohash } });
-      } catch {
-        // Last-resort: handle race condition where another request created it
-        return await prisma.region.findUnique({ where: { geohash } });
-      }
+      return await prismaAny.region.create({ data: { geohash, postCount: 0, hash: geohash } });
+  } catch {
+      // Last-resort: handle race condition where another request created it
+      const fallback = await prisma.region.findUnique({ where: { geohash } });
+      if (fallback) return fallback;
+      // If still not found, throw a descriptive error
+      throw new Error('Failed to find or create region for geohash ' + geohash);
     }
+  }
 }

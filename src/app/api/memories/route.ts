@@ -60,6 +60,12 @@ export async function POST(request: NextRequest) {
 
     // Find or create region for this location
     const region = await findOrCreateRegion(latitude, longitude, prisma);
+    if (!region) {
+      return NextResponse.json(
+        { error: 'Failed to resolve region for the provided coordinates' },
+        { status: 500 }
+      );
+    }
 
     // Parse the memory date if provided
     let memoryDate = null;
@@ -85,7 +91,8 @@ export async function POST(request: NextRequest) {
         memoryDate,
         userId: user.id,
         regionId: region.id,
-        regionHash: region.hash, // Add the required regionHash property
+  // Align with legacy/client schema requiring regionHash: prefer region.geohash
+  regionHash: 'geohash' in region ? (region as { geohash: string }).geohash : (region as unknown as { geohash: string }).geohash,
         caption: description || title, // Fallback for backward compatibility
       },
       include: {
