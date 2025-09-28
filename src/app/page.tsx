@@ -47,6 +47,8 @@ export default function Home() {
   const [mapInstance, setMapInstance] = useState<LeafletMapType | null>(null);
   const [LRef, setLRef] = useState<typeof import('leaflet') | null>(null);
   const [showGrid, setShowGrid] = useState(false);
+  const [visibleRegions, setVisibleRegions] = useState<RegionMarker[]>([]);
+  const [clusterTotals, setClusterTotals] = useState<Record<number, number>>({});
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -81,6 +83,73 @@ export default function Home() {
     }
     load();
   }, []);
+
+  // Recompute decluttered visible regions when map moves/zooms or data updates
+  useEffect(() => {
+    if (!mapInstance) {
+      setVisibleRegions(regions);
+      const totals: Record<number, number> = {};
+      for (const r of regions) totals[r.id] = r.postCount;
+      setClusterTotals(totals);
+      return;
+    }
+
+    const RADIUS_PX = 80; // roughly matches our marker width/spacing
+
+    const recompute = () => {
+      try {
+        // Optionally filter to current bounds for performance
+        const b = mapInstance.getBounds();
+        const inView = regions.filter((r) => b.contains([r.latitude, r.longitude] as [number, number]));
+        // Prefer denser regions first
+        const sorted = [...inView].sort((a, b) => b.postCount - a.postCount);
+        const kept: RegionMarker[] = [];
+        const points: { x: number; y: number }[] = [];
+        const totals: number[] = [];
+        for (const r of sorted) {
+          const p = mapInstance.latLngToContainerPoint([r.latitude, r.longitude] as [number, number]);
+          let collideIndex = -1;
+          for (let i = 0; i < points.length; i++) {
+            const dx = points[i].x - p.x;
+            const dy = points[i].y - p.y;
+            if (dx * dx + dy * dy < RADIUS_PX * RADIUS_PX) {
+              collideIndex = i;
+              break;
+            }
+          }
+          if (collideIndex === -1) {
+            kept.push(r);
+            points.push({ x: p.x, y: p.y });
+            totals.push(r.postCount);
+          } else {
+            // Aggregate hidden region's photos into the representative total
+            totals[collideIndex] += r.postCount;
+          }
+        }
+        setVisibleRegions(kept);
+        // Map totals to region ids
+        const totalsById: Record<number, number> = {};
+        for (let i = 0; i < kept.length; i++) totalsById[kept[i].id] = totals[i] ?? kept[i].postCount;
+        setClusterTotals(totalsById);
+      } catch {
+        setVisibleRegions(regions);
+        const totals: Record<number, number> = {};
+        for (const r of regions) totals[r.id] = r.postCount;
+        setClusterTotals(totals);
+      }
+    };
+
+    // Initial compute and on changes
+    recompute();
+    mapInstance.on('moveend', recompute);
+    mapInstance.on('zoomend', recompute);
+    return () => {
+      try {
+        mapInstance.off('moveend', recompute);
+        mapInstance.off('zoomend', recompute);
+      } catch {}
+    };
+  }, [mapInstance, regions]);
 
   // Setup Leaflet default icon on client
   const [defaultIcon, setDefaultIcon] = useState<Icon | null>(null);
@@ -133,8 +202,9 @@ export default function Home() {
         />
         <ZoomControl position="bottomright" />
         <MapInstanceSetter onReady={setMapInstance} />
-        {regions.map((r) => {
-          const caption = r.postCount ? `${r.postCount} photos here` : 'Hidden photos here';
+        {(visibleRegions.length ? visibleRegions : regions).map((r) => {
+          const totalCount = clusterTotals[r.id] ?? r.postCount;
+          const caption = totalCount ? `${totalCount} photos here` : 'Hidden photos here';
           const thumb = r.imageUrl || '/vercel.svg';
           const icon = LRef
             ? LRef.divIcon({
