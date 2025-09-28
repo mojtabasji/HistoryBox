@@ -16,14 +16,15 @@ async function getAuthedUser(req: NextRequest) {
   return user as { email?: string } | null;
 }
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id: idParam } = await context.params;
     const auth0User = await getAuthedUser(req);
     if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const id = Number(params.id);
+    const id = Number(idParam);
     if (Number.isNaN(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
 
     const post = await prisma.post.findFirst({ where: { id, userId: user.id } });
@@ -35,14 +36,15 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id: idParam } = await context.params;
     const auth0User = await getAuthedUser(req);
     if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const id = Number(params.id);
+    const id = Number(idParam);
     if (Number.isNaN(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
 
     const existing = await prisma.post.findFirst({ where: { id, userId: user.id } });
@@ -110,14 +112,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id: idParam } = await context.params;
     const auth0User = await getAuthedUser(req);
     if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-    const id = Number(params.id);
+    const id = Number(idParam);
     if (Number.isNaN(id)) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
 
     const existing = await prisma.post.findFirst({ where: { id, userId: user.id } });

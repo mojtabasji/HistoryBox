@@ -13,14 +13,33 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     ignores: [
+      // Dependencies
       "node_modules/**",
+      ".pnp",
+      ".pnp.*",
+      // Production builds
       ".next/**",
       "out/**",
       "build/**",
-      "next-env.d.ts",
+      "dist/**",
+      // Generated files
       "src/generated/**",
-      "prisma/migrations/**",
       "**/generated/**",
+      "prisma/migrations/**",
+      // Scripts
+      "scripts/**",
+      // Configs and env
+      "next-env.d.ts",
+      ".vercel/**",
+      // Misc
+      "coverage/**",
+      "*.log",
+      "pids",
+      "*.pid",
+      "*.seed",
+      "*.pid.lock",
+      // Env files
+      ".env*",
     ],
   },
 ];
