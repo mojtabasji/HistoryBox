@@ -21,6 +21,7 @@ export default function AddMemory() {
     address: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -56,14 +57,39 @@ export default function AddMemory() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !formData.title || !formData.imageUrl || (formData.latitude === 0 && formData.longitude === 0)) {
-      alert('Please fill in all required fields and ensure location and image are selected.');
+    if (!user || !formData.title || (formData.latitude === 0 && formData.longitude === 0)) {
+      alert('Please fill in all required fields and ensure location is selected.');
       return;
     }
 
     setIsSubmitting(true);
     
     try {
+      // Upload image now if deferred
+      let imageUrl = formData.imageUrl;
+      if (!imageUrl) {
+        if (!selectedFile) {
+          alert('Please choose a photo to upload.');
+          setIsSubmitting(false);
+          return;
+        }
+        // Convert to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(selectedFile);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = (err) => reject(err);
+        });
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: base64 }),
+        });
+        const uploadJson = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload failed');
+        imageUrl = uploadJson.url as string;
+      }
+
       // Send memory data to API; session is carried via cookies
       const response = await fetch('/api/memories', {
         method: 'POST',
@@ -73,7 +99,7 @@ export default function AddMemory() {
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
-          imageUrl: formData.imageUrl,
+          imageUrl,
           latitude: formData.latitude,
           longitude: formData.longitude,
           address: formData.address,
@@ -95,6 +121,7 @@ export default function AddMemory() {
           longitude: 0,
           address: ''
         });
+        setSelectedFile(null);
         // Redirect to dashboard
         router.push('/dashboard');
       } else {
@@ -218,6 +245,8 @@ export default function AddMemory() {
               <ImageUpload
                 onImageUpload={handleImageUpload}
                 currentImage={formData.imageUrl}
+                uploadOnSelect={false}
+                onFileSelected={(file) => setSelectedFile(file)}
                 className="w-full"
               />
             </div>

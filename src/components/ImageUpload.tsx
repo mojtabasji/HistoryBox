@@ -6,44 +6,25 @@ interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void;
   currentImage?: string;
   className?: string;
+  uploadOnSelect?: boolean; // when false, do not upload immediately; caller uploads on save
+  onFileSelected?: (file: File) => void; // notify parent about the selected file when deferring
 }
 
-export default function ImageUpload({ onImageUpload, currentImage, className = '' }: ImageUploadProps) {
+export default function ImageUpload({ onImageUpload, currentImage, className = '', uploadOnSelect = true, onFileSelected }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
-  const [lastFile, setLastFile] = useState<File | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-  // Track where preview came from: 'prop' (parent URL), 'remote' (uploaded URL), 'local' (object URL)
-  const [previewSource, setPreviewSource] = useState<'prop' | 'remote' | 'local' | null>(currentImage ? 'prop' : null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Restore temporary preview if component remounts during the same session
-  useEffect(() => {
-    try {
-      const saved = typeof window !== 'undefined' ? sessionStorage.getItem('hb_local_preview_url') : null;
-      if (saved && !currentImage) {
-        setPreview(saved);
-        setPreviewSource('local');
-      }
-    } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Keep preview in sync if parent passes a new URL
   useEffect(() => {
-    // If parent provides a new image URL, adopt it as the preview
-    if (currentImage) {
+    if (currentImage && currentImage !== preview) {
       setPreview(currentImage);
-      setPreviewSource('prop');
-      setUploadError(null);
-      return;
     }
-    // If parent cleared the image, only clear preview if it's not a local selection
-    if (!currentImage && previewSource !== 'local') {
+    if (!currentImage && preview && !objectUrl) {
+      // no external image and not a blob -> clear
       setPreview(null);
-      setPreviewSource(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentImage]);
@@ -59,37 +40,32 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       return;
     }
 
-    setLastFile(file);
-    setUploadError(null);
-    // Create immediate local preview
-    const previewUrl = URL.createObjectURL(file);
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-    setObjectUrl(previewUrl);
-    setPreview(previewUrl);
-    setPreviewSource('local');
-    // Save blob url (small string) to survive Fast Refresh remounts during dev
-    try { if (typeof window !== 'undefined') sessionStorage.setItem('hb_local_preview_url', previewUrl); } catch {}
-
-    // Generate base64 immediately so if the component remounts, we can restore from sessionStorage
-    void convertToBase64(file)
-      .then((b64) => {
-        // Kick off upload as soon as we have base64, reuse it to avoid double work
-        void uploadImage(file, b64);
-      })
-      .catch(() => {
-        // Even if base64 generation fails (rare), still attempt upload which will try again
-        void uploadImage(file);
-      });
+    if (uploadOnSelect) {
+      uploadImage(file);
+    } else {
+      // Deferred mode: just show local preview and notify parent
+      const previewUrl = URL.createObjectURL(file);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setObjectUrl(previewUrl);
+      setPreview(previewUrl);
+      onFileSelected?.(file);
+    }
   };
 
-  const uploadImage = async (file: File, base64FromSelect?: string) => {
+  const uploadImage = async (file: File) => {
     setUploading(true);
     
     try {
-      // Get base64 (use cached one from selection if available)
-      const base64 = base64FromSelect ?? await convertToBase64(file);
-  // We've already stored a blob URL for preview; no need to store large base64 in sessionStorage
+      // Convert file to base64
+      const base64 = await convertToBase64(file);
       
+      // Create preview
+      const previewUrl = URL.createObjectURL(file);
+      // Track and cleanup previous object URL if any
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      setObjectUrl(previewUrl);
+      setPreview(previewUrl);
+
       // Upload to Cloudinary
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -100,33 +76,22 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
       });
 
       if (!response.ok) {
-        let message = 'Upload failed';
-        try {
-          const error = await response.json();
-          message = error?.error || message;
-        } catch {
-          try { message = await response.text(); } catch {}
-        }
-        throw new Error(message);
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
       }
 
       const { url } = await response.json();
       onImageUpload(url);
       setPreview(url);
-      setPreviewSource('remote');
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
-        setObjectUrl(null);
       }
-      setUploadError(null);
-  // Clear temporary blob preview from session (we have a stable remote URL now)
-  try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview_url'); } catch {}
+      setObjectUrl(null);
       
     } catch (error) {
       console.error('Upload error:', error);
-      const msg = error instanceof Error ? error.message : 'Unknown error';
-      setUploadError(msg);
-      // Keep local preview so user can retry, do not clear
+      alert(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      // Keep current preview (local object URL) so user sees the chosen file
     } finally {
       setUploading(false);
     }
@@ -165,18 +130,17 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
     const files = e.target.files;
     if (files && files.length > 0) {
       handleFileSelect(files[0]);
-      // Reset input value so selecting the same file again triggers onChange
-      // Some browsers won't fire change if the value didn't change
-      try { e.target.value = ''; } catch {}
     }
   };
 
-  // overlay input handles clicks; no separate click handler needed
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className={className}>
       <div
-        className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+        className={`relative border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
           dragOver
             ? 'border-indigo-500 bg-indigo-50'
             : 'border-gray-300 hover:border-gray-400'
@@ -184,21 +148,14 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        onClick={handleClick}
       >
-        {/* Invisible file input overlay to ensure native click works reliably */}
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={handleFileInputChange}
-          onClick={(e) => {
-            // Allow reselecting the same file
-            // Reset before the click opens the picker to ensure change fires
-            const input = e.currentTarget as HTMLInputElement;
-            try { input.value = ''; } catch {}
-          }}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          aria-label="Upload image"
+          className="hidden"
         />
 
         {preview ? (
@@ -211,7 +168,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
             />
           </div>
         ) : (
-          <div className="py-8 pointer-events-none">
+          <div className="py-8">
             <svg
               className="mx-auto h-12 w-12 text-gray-400"
               stroke="currentColor"
@@ -232,36 +189,12 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
           </div>
         )}
 
-        {(uploading || uploadError) && (
+        {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
-            {!uploadError ? (
-              <div className="flex flex-col items-center">
-                <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="mt-2 text-sm text-gray-600">Uploading...</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center max-w-xs text-center">
-                <div className="text-sm text-red-600 font-medium">Upload failed</div>
-                <div className="text-xs text-gray-600 mt-1">{uploadError}</div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); if (lastFile) uploadImage(lastFile); }}
-                    className="px-3 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                    disabled={!lastFile}
-                  >
-                    Retry
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setUploadError(null); }}
-                    className="px-3 py-1 text-xs rounded bg-white border hover:bg-gray-50"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="mt-2 text-sm text-gray-600">Uploading...</p>
+            </div>
           </div>
         )}
       </div>
@@ -281,12 +214,6 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
         >
           Remove image
         </button>
-      )}
-      {/* Clear temporary preview if user removes image */}
-      {preview === null && (
-        <span className="sr-only" aria-hidden="true">
-          {(() => { try { if (typeof window !== 'undefined') sessionStorage.removeItem('hb_local_preview_url'); } catch {} return null; })()}
-        </span>
       )}
     </div>
   );
