@@ -16,6 +16,8 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pickerOpenRef = useRef(false);
+  const selectionMadeRef = useRef(false);
 
   // Keep preview in sync if parent passes a new URL
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   }, [currentImage]);
 
   const handleFileSelect = (file: File) => {
+    selectionMadeRef.current = true;
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file');
       return;
@@ -134,8 +137,23 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
   };
 
   const handleClick = () => {
+    pickerOpenRef.current = true;
     fileInputRef.current?.click();
+    // When dialog opens, React may lose focus; when it returns, onFocus runs below
   };
+
+  useEffect(() => {
+    const onFocus = () => {
+      if (pickerOpenRef.current) {
+        // Dialog closed; if selection was made, we already set preview in change
+        // but if an external rerender occurred, keep current preview as-is
+        pickerOpenRef.current = false;
+        selectionMadeRef.current = false;
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, []);
 
   return (
     <div className={className}>

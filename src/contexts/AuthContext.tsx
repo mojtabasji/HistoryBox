@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const didInit = React.useRef(false);
   const inFlight = React.useRef(false);
   const lastFetchedAt = React.useRef(0);
+  const initialLoadDone = React.useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +42,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (inFlight.current) return;
       inFlight.current = true;
       try {
-        setLoading(true);
+        // Only show global loading during the very first auth fetch
+        if (!initialLoadDone.current) setLoading(true);
         const res = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!res.ok) throw new Error('Failed to fetch session');
         const data = await res.json();
@@ -51,7 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         lastFetchedAt.current = Date.now();
         inFlight.current = false;
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !initialLoadDone.current) {
+          setLoading(false);
+          initialLoadDone.current = true;
+        }
       }
     };
 
