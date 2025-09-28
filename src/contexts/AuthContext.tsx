@@ -18,11 +18,11 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
+const noop = async () => Promise.resolve();
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  logout: async () => {},
+  logout: noop,
 });
 
 export const useAuth = () => useContext(AuthContext);
