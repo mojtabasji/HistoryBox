@@ -57,6 +57,36 @@ function binaryToBase32(binary: string): string {
   return result;
 }
 
+// Decode the custom geohash produced by calculateGeohash back into a bounding box
+// Returns: [minLat, minLng, maxLat, maxLng]
+export function decodeGeohashBox(hash: string): [number, number, number, number] {
+  const base32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+  // Convert base32 to full bit string
+  let bits = '';
+  for (const ch of hash) {
+    const idx = base32.indexOf(ch);
+    if (idx < 0) throw new Error('Invalid geohash character: ' + ch);
+    bits += idx.toString(2).padStart(5, '0');
+  }
+
+  const latRange: [number, number] = [-90.0, 90.0];
+  const lngRange: [number, number] = [-180.0, 180.0];
+  let isLat = true; // Must match calculateGeohash ordering
+
+  for (const b of bits) {
+    if (isLat) {
+      const mid = (latRange[0] + latRange[1]) / 2;
+      if (b === '1') latRange[0] = mid; else latRange[1] = mid;
+    } else {
+      const mid = (lngRange[0] + lngRange[1]) / 2;
+      if (b === '1') lngRange[0] = mid; else lngRange[1] = mid;
+    }
+    isLat = !isLat;
+  }
+
+  return [latRange[0], lngRange[0], latRange[1], lngRange[1]];
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function findOrCreateRegion(latitude: number, longitude: number, prisma: any) {
   const geohash = calculateGeohash(latitude, longitude);

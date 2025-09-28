@@ -16,6 +16,8 @@ const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), 
 const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
 const ZoomControl = dynamic(() => import('react-leaflet').then(m => m.ZoomControl), { ssr: false });
+const Rectangle = dynamic(() => import('react-leaflet').then(m => m.Rectangle), { ssr: false });
+import { decodeGeohashBox } from '@/lib/geohash';
 
 type RegionMarker = {
   id: number;
@@ -44,6 +46,7 @@ export default function Home() {
   const mapStyle = useMemo(() => ({ width: '100%', height: '100dvh' }), []);
   const [mapInstance, setMapInstance] = useState<LeafletMapType | null>(null);
   const [LRef, setLRef] = useState<typeof import('leaflet') | null>(null);
+  const [showGrid, setShowGrid] = useState(false);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -186,6 +189,31 @@ export default function Home() {
             </Marker>
           );
         })}
+
+        {/* Optional: region grid rectangles */}
+        {showGrid && regions.map((r) => {
+          try {
+            const [minLat, minLng, maxLat, maxLng] = decodeGeohashBox(r.geohash);
+            const bounds: [[number, number], [number, number]] = [[minLat, minLng], [maxLat, maxLng]];
+            return (
+              <Rectangle
+                key={`rect-${r.id}`}
+                bounds={bounds}
+                pathOptions={{
+                  color: '#1148e2e3',
+                  weight: 1.5,
+                  opacity: 0.9,
+                  dashArray: '3 2',
+                  fill: true,
+                  fillColor: '#858b96d5',
+                  fillOpacity: 0.08,
+                }}
+              />
+            );
+          } catch {
+            return null;
+          }
+        })}
       </LeafletMap>
 
       {/* Top overlay bar */}
@@ -202,7 +230,14 @@ export default function Home() {
             </div>
           </div>
           {/* Right: Auth actions */}
-          <div className="pointer-events-auto justify-self-end flex items-center gap-2">
+          <div className="pointer-events-auto justify-self-end flex items-center gap-2 z-[1001]">
+            <button
+              onClick={() => setShowGrid((s) => !s)}
+              className={`px-3 py-1 rounded text-sm shadow border ${showGrid ? 'bg-white text-gray-700' : 'bg-white/80 backdrop-blur text-gray-700'}`}
+              title="Toggle region grid"
+            >
+              {showGrid ? 'Hide Grid' : 'Show Grid'}
+            </button>
             {user ? (
               <>
                 <Link href="/dashboard" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm shadow">Dashboard</Link>
