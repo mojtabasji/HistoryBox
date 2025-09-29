@@ -38,6 +38,7 @@ export default function RegionPage() {
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStart = React.useRef<{ x: number; y: number } | null>(null);
+  // index-based slider; we derive current index from viewerPost
 
   const load = async () => {
     setLoading(true);
@@ -127,6 +128,39 @@ export default function RegionPage() {
       panStart.current = null;
     }
   }, [viewerPost]);
+
+  // Build unlocked posts timeline (sorted by date; fallback to index when date missing)
+  const timeline = useMemo(() => {
+    if (!data) return { items: [] as { post: ApiPost; t: number }[], min: 0, max: 0, hasDates: false };
+    const unlockedPosts = (data.posts || []).filter((p) => !p.blurred);
+  const hasDates = unlockedPosts.some((p) => p.createdAt && !Number.isNaN(Date.parse(p.createdAt)));
+    const items = unlockedPosts.map((p, i) => ({ post: p, t: p.createdAt && !Number.isNaN(Date.parse(p.createdAt)) ? Date.parse(p.createdAt!) : i }));
+    items.sort((a, b) => a.t - b.t);
+    const min = items.length ? items[0].t : 0;
+    const max = items.length ? items[items.length - 1].t : 0;
+    return { items, min, max, hasDates };
+  }, [data]);
+
+  // No separate state needed for slider value; use currentIndex derived below
+
+  const currentIndex = useMemo(() => {
+    if (!viewerPost || !timeline.items.length) return -1;
+    return timeline.items.findIndex((it) => it.post.id === viewerPost.id);
+  }, [viewerPost, timeline.items]);
+
+  const jumpToIndex = (idx: number) => {
+    if (!timeline.items.length) return;
+    const clamped = Math.max(0, Math.min(timeline.items.length - 1, idx));
+    const target = timeline.items[clamped];
+    if (target) {
+      setViewerPost(target.post);
+    }
+  };
+  const onTimelineIndexChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const idx = Number(e.target.value);
+    if (Number.isNaN(idx)) return;
+    jumpToIndex(idx);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -290,6 +324,57 @@ export default function RegionPage() {
                   aria-label="Reset zoom"
                 >Reset</button>
               </div>
+
+              {/* Timeline slider (center bottom) */}
+              {timeline.items.length > 1 && (
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-4 pr-36 pl-4">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 text-white shadow border border-white/10 w-[min(92vw,720px)]">
+                    <div className="flex items-center justify-between text-xs mb-2 opacity-90">
+                      <div>Timeline</div>
+                      <div>
+                        {timeline.hasDates
+                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString() : '—')
+                          : `${Math.max(1, currentIndex + 1)} / ${timeline.items.length}`}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="bg-white/20 hover:bg-white/30 text-white rounded px-2 py-1 text-xs"
+                        onClick={() => jumpToIndex((currentIndex === -1 ? timeline.items.length - 1 : currentIndex) - 1)}
+                        aria-label="Previous"
+                      >Prev</button>
+                      <input
+                        type="range"
+                        className="flex-1 accent-indigo-400"
+                        min={0}
+                        max={Math.max(0, timeline.items.length - 1)}
+                        step={1}
+                        value={currentIndex >= 0 ? currentIndex : Math.max(0, timeline.items.length - 1)}
+                        onChange={onTimelineIndexChange}
+                        onInput={(e) => onTimelineIndexChange(e as unknown as React.ChangeEvent<HTMLInputElement>)}
+                      />
+                      <button
+                        className="bg-white/20 hover:bg-white/30 text-white rounded px-2 py-1 text-xs"
+                        onClick={() => jumpToIndex((currentIndex === -1 ? 0 : currentIndex) + 1)}
+                        aria-label="Next"
+                      >Next</button>
+                    </div>
+                    <div className="mt-2 grid grid-cols-3 text-[11px] text-white/90">
+                      <div className="justify-self-start">
+                        {timeline.hasDates ? new Date(timeline.items[0].t).toLocaleDateString() : '1'}
+                      </div>
+                      <div className="justify-self-center">
+                        {timeline.hasDates
+                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString() : '—')
+                          : `${Math.max(1, currentIndex + 1)}`}
+                      </div>
+                      <div className="justify-self-end">
+                        {timeline.hasDates ? new Date(timeline.items[timeline.items.length - 1].t).toLocaleDateString() : String(timeline.items.length)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
