@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Spinner } from './Loading';
 import type { Map as LeafletMap } from 'leaflet';
 
 type Result = {
@@ -100,7 +101,12 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
       </div>
       {open && (results.length > 0 || loading) && (
         <div className="mt-2 max-h-72 overflow-auto rounded-md border border-gray-200 bg-white shadow">
-          {loading && <div className="px-3 py-2 text-sm text-gray-500">Searching…</div>}
+          {loading && (
+            <div className="px-3 py-2 text-sm text-gray-500 flex items-center gap-2">
+              <Spinner size="sm" />
+              <span>Searching…</span>
+            </div>
+          )}
           {!loading && results.map((r, i) => (
             <button
               key={`${r.display_name}-${i}`}

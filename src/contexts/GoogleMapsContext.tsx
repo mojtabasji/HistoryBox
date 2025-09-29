@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import { LoadScript } from '@react-google-maps/api';
+import Loading from '@/components/Loading';
 
 interface GoogleMapsContextType {
   isLoaded: boolean;
@@ -30,11 +31,7 @@ export const GoogleMapsProvider: React.FC<GoogleMapsProviderProps> = ({ children
     <LoadScript
       googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
       libraries={libraries}
-      loadingElement={
-        <div className="w-full h-screen flex items-center justify-center">
-          <div className="text-lg">Loading Google Maps...</div>
-        </div>
-      }
+      loadingElement={<Loading label="Loading Google Maps…" variant="fullscreen" />}
     >
       <GoogleMapsContext.Provider value={{ isLoaded: true }}>
         {children}

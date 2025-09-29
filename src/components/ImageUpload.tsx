@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Loading from './Loading';
 
 interface ImageUploadProps {
   onImageUpload: (imageUrl: string) => void;
@@ -207,14 +208,7 @@ export default function ImageUpload({ onImageUpload, currentImage, className = '
           </div>
         )}
 
-        {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-lg">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-2 text-sm text-gray-600">Uploading...</p>
-            </div>
-          </div>
-        )}
+        {uploading && <Loading variant="cover" label="Uploading…" />}
       </div>
 
       {preview && (

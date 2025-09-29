@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Loading, { Spinner } from '@/components/Loading';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -30,6 +31,7 @@ export default function RegionPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unlocking, setUnlocking] = useState(false);
+  const [checkingUnlock, setCheckingUnlock] = useState(false);
   const [coins, setLocalCoins] = useState<number | null>(null);
   const [viewerPost, setViewerPost] = useState<ApiPost | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -85,6 +87,28 @@ export default function RegionPage() {
     }
   };
 
+  // Check unlock status explicitly when user is present (optional double-check for SSR races)
+  useEffect(() => {
+    let cancelled = false;
+    const check = async () => {
+      if (!user || !regionHash) return;
+      setCheckingUnlock(true);
+      try {
+        const res = await fetch(`/api/regions/${regionHash}/posts`, { cache: 'no-store' });
+        if (cancelled) return;
+        if (res.ok) {
+          const json = await res.json();
+          setData(json as ApiResponse);
+        }
+      } catch { /* ignore */ }
+      finally {
+        if (!cancelled) setCheckingUnlock(false);
+      }
+    };
+    check();
+    return () => { cancelled = true; };
+  }, [user, regionHash]);
+
   // Close viewer on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -120,16 +144,17 @@ export default function RegionPage() {
         </div>
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
-        {loading && <div>Loading region…</div>}
+  <main className="relative max-w-6xl mx-auto px-4 py-6">
+  {loading && <Loading label="Loading region…" variant="inset" />}
         {error && <div className="text-red-700">{error}</div>}
         {data && (
           <>
             <div className="mb-4 flex items-center justify-between">
               <div className="text-sm text-gray-700">{data.region.postCount} total posts</div>
               {!data.unlocked && (
-                <button onClick={onUnlock} disabled={unlocking} className={`px-3 py-2 rounded text-white text-sm ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-                  🔒 Unlock region (2 coins)
+                <button onClick={onUnlock} disabled={unlocking} className={`px-3 py-2 rounded text-white text-sm inline-flex items-center gap-2 ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                  {unlocking && <Spinner size="sm" />}
+                  <span>🔒 Unlock region (2 coins)</span>
                 </button>
               )}
             </div>
@@ -171,12 +196,16 @@ export default function RegionPage() {
 
             <div className="mt-6 flex justify-center">
               {needsMore && (
-                <button onClick={onUnlock} disabled={unlocking || !user} className={`px-4 py-2 rounded text-white text-sm ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-                  {user ? 'Unlock more posts (2 coins)' : 'Sign in to unlock'}
+                <button onClick={onUnlock} disabled={unlocking || !user} className={`px-4 py-2 rounded text-white text-sm inline-flex items-center gap-2 ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                  {unlocking && <Spinner size="sm" />}
+                  <span>{user ? 'Unlock more posts (2 coins)' : 'Sign in to unlock'}</span>
                 </button>
               )}
             </div>
           </>
+        )}
+        {(unlocking || checkingUnlock) && (
+          <div className="absolute inset-0"><Loading variant="cover" label={unlocking ? 'Unlocking…' : 'Checking status…'} /></div>
         )}
       </main>
 
