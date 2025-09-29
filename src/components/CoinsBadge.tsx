@@ -1,41 +1,14 @@
 "use client";
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 function classNames(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ');
 }
 
 export default function CoinsBadge({ className }: { className?: string }) {
-  const [coins, setCoins] = React.useState<number | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const fetchCoins = React.useCallback(async () => {
-    try {
-      const res = await fetch('/api/user/stats', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to fetch coins');
-      const data = await res.json();
-      setCoins(typeof data.coins === 'number' ? data.coins : 0);
-      setError(null);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Error';
-      setError(msg);
-      setCoins(0);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    fetchCoins();
-    const onFocus = () => fetchCoins();
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') fetchCoins();
-    };
-    window.addEventListener('focus', onFocus);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('focus', onFocus);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [fetchCoins]);
+  const { coins } = useAuth();
+  // No automatic fetches here; AuthContext handles initial load and focus refreshes.
 
   return (
     <div
@@ -43,7 +16,7 @@ export default function CoinsBadge({ className }: { className?: string }) {
         'pointer-events-auto inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-3 py-1 text-amber-800 shadow ring-1 ring-amber-300',
         className
       )}
-      title={error ? `Coins: ${coins ?? 0} (stale)` : `Coins: ${coins ?? 0}`}
+      title={`Coins: ${coins ?? 0}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

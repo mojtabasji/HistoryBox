@@ -49,6 +49,8 @@ export default function Home() {
   const [showGrid, setShowGrid] = useState(false);
   const [visibleRegions, setVisibleRegions] = useState<RegionMarker[]>([]);
   const [clusterTotals, setClusterTotals] = useState<Record<number, number>>({});
+  const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
+  const [unlockRequested, setUnlockRequested] = useState<Record<string, boolean>>({});
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -222,40 +224,63 @@ export default function Home() {
                 iconAnchor: [48, 84],
               })
             : (defaultIcon ?? undefined);
+          const truncate = (text: string | null | undefined, n = 5) => {
+            const t = (text ?? '').trim();
+            if (!t) return '';
+            const parts = t.split(/\s+/).filter(Boolean);
+            if (parts.length <= n) return t;
+            return parts.slice(0, n).join(' ');
+          };
+
+          const onPopupOpen = async () => {
+            if (!user) return; // only check unlock when signed in
+            const key = r.geohash;
+            if (unlocked[key] !== undefined || unlockRequested[key]) return;
+            setUnlockRequested((m) => ({ ...m, [key]: true }));
+            try {
+              const res = await fetch(`/api/regions/${key}/posts`, { cache: 'no-store' });
+              if (res.ok) {
+                const data = await res.json();
+                setUnlocked((m) => ({ ...m, [key]: !!data?.unlocked }));
+              }
+            } catch {
+              // ignore failures; treat as locked
+            } finally {
+              setUnlockRequested((m) => ({ ...m, [key]: false }));
+            }
+          };
+
+          const isUnlocked = !!unlocked[r.geohash];
+
           return (
-            <Marker key={r.id} position={[r.latitude, r.longitude] as [number, number]} icon={icon as Icon | undefined}>
-              {user && (
-                <Popup>
-                  <div className="w-56">
-                    {r.imageUrl && (
-                      <div className="mb-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={r.imageUrl} alt={r.title || 'memory'} className="w-full h-32 object-cover rounded" />
-                      </div>
-                    )}
-                    <div className="font-semibold text-sm mb-1">{r.title || 'Memory'}</div>
-                    {r.description && (
-                      <div className="text-xs text-gray-700 line-clamp-3">{r.description}</div>
-                    )}
-                    <div className="mt-2 flex gap-2">
-                      <Link href="/add-memory" className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs">Add Memory</Link>
-                      <Link href="/dashboard" className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs">My Memories</Link>
+            <Marker
+              key={r.id}
+              position={[r.latitude, r.longitude] as [number, number]}
+              icon={icon as Icon | undefined}
+              eventHandlers={{ popupopen: onPopupOpen }}
+            >
+              <Popup>
+                <div className="w-56">
+                  {r.imageUrl && (
+                    <div className="mb-2 relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={r.imageUrl} alt={r.title || 'memory'} className={`w-full h-32 object-cover rounded ${isUnlocked ? '' : 'blur-sm select-none'}`} />
+                      {!isUnlocked && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-white text-xs bg-black/40 px-2 py-0.5 rounded">Locked preview</span>
+                        </div>
+                      )}
                     </div>
+                  )}
+                  <div className="font-semibold text-sm mb-1">{r.title || 'Memory'}</div>
+                  <div className="text-xs text-gray-700">
+                    {isUnlocked ? (truncate(r.description || r.title, 5)) : (truncate(r.description || r.title, 5) + ' …locked')}
                   </div>
-                </Popup>
-              )}
-              {!user && (
-                <Popup>
-                  <div className="w-56">
-                    <div className="text-sm font-medium mb-1">Locked Region</div>
-                    <div className="text-xs text-gray-700 mb-2">Sign in to view details</div>
-                    <div className="flex gap-2">
-                      <Link href="/login" className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs">Sign In</Link>
-                      <Link href="/signup" className="bg-white/80 backdrop-blur border text-gray-700 px-2 py-1 rounded text-xs">Create Account</Link>
-                    </div>
+                  <div className="mt-2 flex gap-2">
+                    <Link href={`/region/${r.geohash}`} className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs">{isUnlocked ? 'Show' : 'Unlock'}</Link>
                   </div>
-                </Popup>
-              )}
+                </div>
+              </Popup>
             </Marker>
           );
         })}

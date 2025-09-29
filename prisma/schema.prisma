@@ -20,6 +20,8 @@ model User {
   firebaseUid String?  @unique
   password    String?
   posts       Post[]
+  coins       Int      @default(5)
+  unlocks     UserRegionUnlock[]
   createdAt   DateTime @default(now())
 }
 
@@ -28,6 +30,8 @@ model Region {
   geohash   String @unique
   postCount Int    @default(0)
   posts     Post[]
+  hash      String @unique
+  unlocks   UserRegionUnlock[]
 }
 
 model Post {
@@ -44,6 +48,21 @@ model Post {
   longitude   Float
   address     String?
   memoryDate  DateTime?
+  /// Optional string copy of region hash for convenience; relation is via regionId
+  regionHash  String?
   createdAt   DateTime @default(now())
+}
+
+model UserRegionUnlock {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  regionId      Int
+  unlockedCount Int      @default(10)
+  createdAt     DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  region Region @relation(fields: [regionId], references: [id])
+
+  @@unique([userId, regionId])
 }
 
