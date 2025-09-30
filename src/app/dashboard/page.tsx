@@ -87,6 +87,12 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <Link 
+                href="/coins" 
+                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Buy Coins
+              </Link>
+              <Link 
                 href="/" 
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
@@ -104,6 +110,12 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Your Memories</h2>
             <div className="space-x-2">
+              <Link
+                href="/coins"
+                className="inline-block bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Buy Coins
+              </Link>
               <Link
                 href="/"
                 className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
