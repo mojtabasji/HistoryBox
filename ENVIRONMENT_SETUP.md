@@ -95,6 +95,31 @@ Your `src/lib/firebase.js` now:
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (Analytics)
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (Maps functionality)
 
+### **Authentication (SuperTokens + SMS)**
+
+Add these to your `.env.local` (values are examples/placeholders):
+
+```env
+# SuperTokens Core
+SUPERTOKENS_CONNECTION_URI=https://auth.example.com
+# If your core has an API key
+SUPERTOKENS_API_KEY=
+
+# Public domains used by the app
+NEXT_PUBLIC_API_DOMAIN=http://localhost:3000
+NEXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:3000
+
+# SMS Gateway
+SMS_GATEWAY_URL=http://payammatni.com/webservice/url/send.php
+SMS_FROM_NUMBER=9982000
+SMS_USERNAME=your_gateway_username
+SMS_PASSWORD=your_gateway_password
+```
+
+Notes:
+- API endpoints are mounted at `/api/auth` and UI at `/login` in code; override only if you change routes.
+- Never commit `.env.local`. Share `.env.example` values with your team.
+
 ## 🛠️ Troubleshooting
 
 ### **Error: Missing required environment variables**

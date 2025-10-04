@@ -6,11 +6,15 @@
 // Make sure to have your .env.local file in the project root
 
 const requiredVars = [
-  'AUTH0_SECRET',
-  'AUTH0_BASE_URL',
-  'AUTH0_ISSUER_BASE_URL',
-  'AUTH0_CLIENT_ID',
-  'AUTH0_CLIENT_SECRET',
+  'SUPERTOKENS_CONNECTION_URI',
+  // Optional but recommended if your core requires it
+  // 'SUPERTOKENS_API_KEY',
+  'NEXT_PUBLIC_API_DOMAIN',
+  'NEXT_PUBLIC_WEBSITE_DOMAIN',
+  'SMS_GATEWAY_URL',
+  'SMS_FROM_NUMBER',
+  'SMS_USERNAME',
+  'SMS_PASSWORD',
 ];
 
 const optionalVars = [
@@ -49,7 +53,7 @@ console.log('\n' + '='.repeat(50));
 
 if (allGood) {
   console.log('🎉 Environment configuration is valid!');
-  console.log('✅ Auth0 authentication will work');
+  console.log('✅ SuperTokens authentication will work');
   
   if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
     console.log('✅ Google Maps integration will work');

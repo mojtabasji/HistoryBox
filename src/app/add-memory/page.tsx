@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -175,7 +175,9 @@ export default function AddMemory() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome{user?.email ? `, ${user.email}` : ''}</span>
+              <span className="text-gray-700">
+                {user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}
+              </span>
             </div>
           </div>
         </div>

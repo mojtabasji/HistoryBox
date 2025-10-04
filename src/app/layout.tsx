@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AuthProvider } from "../contexts/AuthContext";
+import { SuperTokensAuthProvider } from "@/contexts/SuperTokensAuthContext";
 import CoinsBadge from "@/components/CoinsBadge";
 
 export const metadata: Metadata = {
@@ -16,11 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <AuthProvider>
+        <SuperTokensAuthProvider>
           {/* Global UI overlays */}
           <div className="fixed right-3 top-3 z-[10000]"><CoinsBadge /></div>
           {children}
-        </AuthProvider>
+        </SuperTokensAuthProvider>
       </body>
     </html>
   );

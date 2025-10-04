@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import ImageUpload from '@/components/ImageUpload';
 import LocationPicker from '@/components/LocationPicker';
 import { createPortal } from 'react-dom';
