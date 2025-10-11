@@ -5,10 +5,8 @@ import Passwordless from "supertokens-node/recipe/passwordless";
 const {
   SUPERTOKENS_CONNECTION_URI,
   SUPERTOKENS_API_KEY,
-  SMS_GATEWAY_URL,
-  SMS_FROM_NUMBER,
-  SMS_USERNAME,
-  SMS_PASSWORD,
+  SMS_API_URL,
+  SMS_API_TOKEN,
   NEXT_PUBLIC_API_DOMAIN,
   NEXT_PUBLIC_WEBSITE_DOMAIN,
 } = process.env;
@@ -42,23 +40,20 @@ SuperTokens.init({
               ? `Your History Box code is ${input.userInputCode}`
               : `Use this link to sign in: ${input.urlWithLinkCode}`;
 
-            // Validate required SMS gateway credentials
-            if (!SMS_GATEWAY_URL || !SMS_FROM_NUMBER || !SMS_USERNAME || !SMS_PASSWORD) {
-              throw new Error("SMS gateway configuration missing. Please set SMS_GATEWAY_URL, SMS_FROM_NUMBER, SMS_USERNAME, SMS_PASSWORD in environment.");
+            // Validate required SMS API settings
+            if (!SMS_API_URL || !SMS_API_TOKEN) {
+              throw new Error("SMS API configuration missing. Please set SMS_API_URL and SMS_API_TOKEN in environment.");
             }
 
-            // Construct gateway URL
-            const smsUrl = new URL(SMS_GATEWAY_URL);
-            smsUrl.searchParams.set("method", "sendsms");
-            smsUrl.searchParams.set("format", "json");
-            smsUrl.searchParams.set("from", SMS_FROM_NUMBER);
-            smsUrl.searchParams.set("to", phoneNumber);
-            smsUrl.searchParams.set("text", codeMessage);
-            smsUrl.searchParams.set("type", "0");
-            smsUrl.searchParams.set("username", SMS_USERNAME);
-            smsUrl.searchParams.set("password", SMS_PASSWORD);
-
-            const res = await fetch(smsUrl.toString());
+            // POST to external SMS service
+            const res = await fetch(SMS_API_URL, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${SMS_API_TOKEN}`,
+              },
+              body: JSON.stringify({ phone: phoneNumber, message: codeMessage }),
+            });
             if (!res.ok) {
               const body = await res.text().catch(() => "");
               throw new Error(`SMS gateway responded with ${res.status}. ${body}`);

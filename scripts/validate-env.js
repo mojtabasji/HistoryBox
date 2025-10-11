@@ -11,10 +11,8 @@ const requiredVars = [
   // 'SUPERTOKENS_API_KEY',
   'NEXT_PUBLIC_API_DOMAIN',
   'NEXT_PUBLIC_WEBSITE_DOMAIN',
-  'SMS_GATEWAY_URL',
-  'SMS_FROM_NUMBER',
-  'SMS_USERNAME',
-  'SMS_PASSWORD',
+  'SMS_API_URL',
+  'SMS_API_TOKEN',
 ];
 
 const optionalVars = [

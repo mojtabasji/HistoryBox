@@ -95,13 +95,13 @@ Your `src/lib/firebase.js` now:
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (Analytics)
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (Maps functionality)
 
-### **Authentication (SuperTokens + SMS)**
+### **Authentication (SuperTokens + SMS API)**
 
 Add these to your `.env.local` (values are examples/placeholders):
 
 ```env
 # SuperTokens Core
-SUPERTOKENS_CONNECTION_URI=https://auth.example.com
+SUPERTOKENS_CONNECTION_URI=https://auth.bytecraft.ir
 # If your core has an API key
 SUPERTOKENS_API_KEY=
 
@@ -109,11 +109,10 @@ SUPERTOKENS_API_KEY=
 NEXT_PUBLIC_API_DOMAIN=http://localhost:3000
 NEXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:3000
 
-# SMS Gateway
-SMS_GATEWAY_URL=http://payammatni.com/webservice/url/send.php
-SMS_FROM_NUMBER=9982000
-SMS_USERNAME=your_gateway_username
-SMS_PASSWORD=your_gateway_password
+# External SMS API
+# The app will call this with: POST /sms/send with JSON body { phone, message } and Authorization: Bearer <TOKEN>
+SMS_API_URL=https://your-sms-service.example.com/sms/send
+SMS_API_TOKEN=your_sms_api_token
 ```
 
 Notes:
