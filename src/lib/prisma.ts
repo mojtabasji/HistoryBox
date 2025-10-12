@@ -16,6 +16,15 @@ function createPrismaClient() {
       if (!url.searchParams.has('prepared_statements')) {
         url.searchParams.set('prepared_statements', 'false');
       }
+      // In production (e.g., Vercel with PgBouncer), enforce pooling/SSL params
+      if (process.env.NODE_ENV === 'production') {
+        if (!url.searchParams.has('pgbouncer')) {
+          url.searchParams.set('pgbouncer', 'true');
+        }
+        if (!url.searchParams.has('sslmode')) {
+          url.searchParams.set('sslmode', 'require');
+        }
+      }
     options.datasources = { db: { url: url.toString() } };
     }
   } catch {
