@@ -83,7 +83,46 @@ Your `src/lib/firebase.js` now:
 
 ## 📋 Environment Variables Reference
 
-### **Required (Firebase):**
+### Cloudinary (uploads)
+
+Required:
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Used by `src/app/api/upload/route.ts` for server-side uploads.
+
+### SuperTokens (authentication)
+
+Required:
+- `SUPERTOKENS_CONNECTION_URI` (e.g., https://auth.bytecraft.ir)
+- `NEXT_PUBLIC_API_DOMAIN` (e.g., http://localhost:3000)
+- `NEXT_PUBLIC_WEBSITE_DOMAIN` (e.g., http://localhost:3000)
+
+Optional:
+- `SUPERTOKENS_API_KEY` (if your SuperTokens core enforces it)
+
+Routes are configured at `/api/auth` (API) and `/login` (UI) in code.
+
+### Supabase / Database
+
+Required:
+- `DATABASE_URL` (Prisma database URL; Supabase projects provide this)
+
+Optional:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### SMS API (passwordless SMS)
+
+Required:
+- `SMS_API_URL` (e.g., https://sms.example.com/sms/send)
+- `SMS_API_TOKEN` (Bearer token used in Authorization header)
+
+The app issues: `POST SMS_API_URL` with JSON `{ phone: "+123...", message: "..." }` and header `Authorization: Bearer <TOKEN>`.
+
+### Firebase (optional client features)
+Required (if using Firebase client SDK):
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
@@ -95,7 +134,7 @@ Your `src/lib/firebase.js` now:
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (Analytics)
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (Maps functionality)
 
-### **Authentication (SuperTokens + SMS API)**
+### **Authentication (SuperTokens + SMS API) Example**
 
 Add these to your `.env.local` (values are examples/placeholders):
 
