@@ -1,27 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { findOrCreateRegion } from '@/lib/geohash';
+import { getAuthUserFromRequest } from '@/lib/authServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function getAuthedUser(req: NextRequest) {
-  const meUrl = new URL('/api/auth/me', req.url);
-  const meRes = await fetch(meUrl.toString(), {
-    headers: { cookie: req.headers.get('cookie') ?? '' },
-    cache: 'no-store',
-  });
-  if (!meRes.ok) return null;
-  const { user } = await meRes.json();
-  return user as { email?: string } | null;
+async function getDbUser(req: NextRequest) {
+  const stUser = await getAuthUserFromRequest(req);
+  if (!stUser) return null;
+  let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
+  if (!user && stUser.phoneNumber) {
+    user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
+  }
+  return user;
 }
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id: idParam } = await context.params;
-    const auth0User = await getAuthedUser(req);
-    if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
+  const user = await getDbUser(req);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const id = Number(idParam);
@@ -39,9 +37,7 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 export async function PATCH(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id: idParam } = await context.params;
-    const auth0User = await getAuthedUser(req);
-    if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
+  const user = await getDbUser(req);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const id = Number(idParam);
@@ -112,9 +108,7 @@ export async function PATCH(req: NextRequest, context: { params: Promise<{ id: s
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const { id: idParam } = await context.params;
-    const auth0User = await getAuthedUser(req);
-    if (!auth0User?.email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
+  const user = await getDbUser(req);
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const id = Number(idParam);

@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getAuthUserFromRequest } from '@/lib/authServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function getAuthedUser(req: NextRequest) {
-  const meUrl = new URL('/api/auth/me', req.url);
-  const meRes = await fetch(meUrl.toString(), {
-    headers: { cookie: req.headers.get('cookie') ?? '' },
-    cache: 'no-store',
-  });
-  if (!meRes.ok) return null;
-  const { user } = await meRes.json();
-  return user as { email?: string } | null;
-}
-
 export async function GET(req: NextRequest) {
   try {
-    const auth0User = await getAuthedUser(req);
-    if (!auth0User?.email) return NextResponse.json({ coins: 0 }, { status: 200 });
-    const user = await prisma.user.findUnique({ where: { email: auth0User.email } });
+    const stUser = await getAuthUserFromRequest(req);
+    if (!stUser?.id) return NextResponse.json({ coins: 0 }, { status: 200 });
+    // Map SuperTokens user to Prisma user: prefer firebaseUid storing external id; fallback by phone (username)
+    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
+    if (!user && stUser.phoneNumber) {
+      user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
+    }
     if (!user) return NextResponse.json({ coins: 0 }, { status: 200 });
     // Primary: read coins from the User table (Supabase column)
     let coins: number | null = null;

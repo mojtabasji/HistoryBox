@@ -2,48 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { findOrCreateRegion } from '../../../lib/geohash';
 import { getSupabaseServer } from '@/lib/supabaseServer';
-// Auth is resolved by delegating to our Edge route /api/auth/me to avoid Node cookies() issues in Next 15
+import { getAuthUserFromRequest } from '@/lib/authServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    // Resolve user via Edge /api/auth/me using incoming cookies
-    const meUrl = new URL('/api/auth/me', request.url);
-    const meRes = await fetch(meUrl.toString(), {
-      headers: { cookie: request.headers.get('cookie') ?? '' },
-      cache: 'no-store',
-    });
-    const { user: auth0User } = meRes.ok ? await meRes.json() : { user: null };
-    if (!auth0User) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  const stUser = await getAuthUserFromRequest(request);
+  if (!stUser) return NextResponse.json({ memories: [] }, { status: 200 });
+
+    // Map SuperTokens user to Prisma user
+    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
+    if (!user && stUser.phoneNumber) {
+      user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
     }
-
-    const email = typeof auth0User.email === 'string' ? auth0User.email : undefined;
-    const sub = typeof auth0User.sub === 'string' ? auth0User.sub : undefined;
-
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email not found in token' },
-        { status: 400 }
-      );
-    }
-
-    // Find or create user in our database
-    let user = await prisma.user.findUnique({ where: { email } });
-
     if (!user) {
       user = await prisma.user.create({
         data: {
-          firebaseUid: sub || undefined,
-          email,
-          username: email.split('@')[0], // Use email prefix as username
-        }
+          firebaseUid: stUser.id,
+          email: `${stUser.id}@users.supertokens`, // placeholder, prisma requires unique email
+          username: stUser.phoneNumber || stUser.id,
+        },
       });
-    } else if (!user.firebaseUid && sub) {
-      // Backfill auth0 sub to firebaseUid column (reused as external id)
-      user = await prisma.user.update({ where: { id: user.id }, data: { firebaseUid: sub } });
     }
 
     // Parse the request body
@@ -134,7 +115,7 @@ export async function POST(request: NextRequest) {
         const { data: sbUser, error: sbUserErr } = await sb
           .from('users')
           .upsert(
-            { firebase_uid: sub || user.firebaseUid || '', email },
+            { firebase_uid: user.firebaseUid || '', email: user.email },
             { onConflict: 'firebase_uid' }
           )
           .select()
@@ -187,29 +168,20 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Resolve user via Edge /api/auth/me using incoming cookies
-    const meUrl = new URL('/api/auth/me', request.url);
-    const meRes = await fetch(meUrl.toString(), {
-      headers: { cookie: request.headers.get('cookie') ?? '' },
-      cache: 'no-store',
-    });
-    const { user: auth0User } = meRes.ok ? await meRes.json() : { user: null };
-    if (!auth0User) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    const email = typeof auth0User.email === 'string' ? auth0User.email : undefined;
-    const sub = typeof auth0User.sub === 'string' ? auth0User.sub : undefined;
-    if (!email) return NextResponse.json({ error: 'Email not found' }, { status: 400 });
-
-    // Find or create user (creation ensures a row exists for new users)
-    let user = await prisma.user.findUnique({ where: { email } });
+  const stUser = await getAuthUserFromRequest(request);
+  if (!stUser) return NextResponse.json({ memories: [] }, { status: 200 });
+    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
+    if (!user && stUser.phoneNumber) {
+      user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
+    }
     if (!user) {
       user = await prisma.user.create({
         data: {
-          firebaseUid: sub || undefined,
-          email,
-          username: email.split('@')[0],
+          firebaseUid: stUser.id,
+          email: `${stUser.id}@users.supertokens`,
+          username: stUser.phoneNumber || stUser.id,
         },
       });
-    } else if (!user.firebaseUid && sub) {
-      user = await prisma.user.update({ where: { id: user.id }, data: { firebaseUid: sub } });
     }
 
     const posts = await prisma.post.findMany({
