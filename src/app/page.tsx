@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import Link from 'next/link';
 import type { Icon, Map as LeafletMapType } from 'leaflet';
 import marker1x from 'leaflet/dist/images/marker-icon.png';

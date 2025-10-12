@@ -21,13 +21,13 @@ Your `.env.local` file has been created with your Firebase credentials:
 
 ```env
 # Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyBNe_UaHQTLF-Ynk3uPgaDSoA7eh9fDtGc
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=history-box-a74c0.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=history-box-a74c0
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=history-box-a74c0.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=963065363604
-NEXT_PUBLIC_FIREBASE_APP_ID=1:963065363604:web:7110863b451eb414e74881
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-VJSGDJK0R9
+NEXT_PUBLIC_FIREBASE_API_KEY= some_Key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=app_firebase_auth_domain.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=history-box-<ID>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=history-box-<ID>.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<APP_ID>
+NEXT_PUBLIC_FIREBASE_APP_ID=<ID>
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=<ID>
 
 # Google Maps API Key (add when you get it)
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
@@ -83,7 +83,46 @@ Your `src/lib/firebase.js` now:
 
 ## 📋 Environment Variables Reference
 
-### **Required (Firebase):**
+### Cloudinary (uploads)
+
+Required:
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+Used by `src/app/api/upload/route.ts` for server-side uploads.
+
+### SuperTokens (authentication)
+
+Required:
+- `SUPERTOKENS_CONNECTION_URI` (e.g., https://auth.bytecraft.ir)
+- `NEXT_PUBLIC_API_DOMAIN` (e.g., http://localhost:3000)
+- `NEXT_PUBLIC_WEBSITE_DOMAIN` (e.g., http://localhost:3000)
+
+Optional:
+- `SUPERTOKENS_API_KEY` (if your SuperTokens core enforces it)
+
+Routes are configured at `/api/auth` (API) and `/login` (UI) in code.
+
+### Supabase / Database
+
+Required:
+- `DATABASE_URL` (Prisma database URL; Supabase projects provide this)
+
+Optional:
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### SMS API (passwordless SMS)
+
+Required:
+- `SMS_API_URL` (e.g., https://sms.example.com/sms/send)
+- `SMS_API_TOKEN` (Bearer token used in Authorization header)
+
+The app issues: `POST SMS_API_URL` with JSON `{ phone: "+123...", message: "..." }` and header `Authorization: Bearer <TOKEN>`.
+
+### Firebase (optional client features)
+Required (if using Firebase client SDK):
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
@@ -94,6 +133,30 @@ Your `src/lib/firebase.js` now:
 ### **Optional:**
 - `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (Analytics)
 - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` (Maps functionality)
+
+### **Authentication (SuperTokens + SMS API) Example**
+
+Add these to your `.env.local` (values are examples/placeholders):
+
+```env
+# SuperTokens Core
+SUPERTOKENS_CONNECTION_URI=https://auth.bytecraft.ir
+# If your core has an API key
+SUPERTOKENS_API_KEY=
+
+# Public domains used by the app
+NEXT_PUBLIC_API_DOMAIN=http://localhost:3000
+NEXT_PUBLIC_WEBSITE_DOMAIN=http://localhost:3000
+
+# External SMS API
+# The app will call this with: POST /sms/send with JSON body { phone, message } and Authorization: Bearer <TOKEN>
+SMS_API_URL=https://your-sms-service.example.com/sms/send
+SMS_API_TOKEN=your_sms_api_token
+```
+
+Notes:
+- API endpoints are mounted at `/api/auth` and UI at `/login` in code; override only if you change routes.
+- Never commit `.env.local`. Share `.env.example` values with your team.
 
 ## 🛠️ Troubleshooting
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -98,7 +98,9 @@ export default function Dashboard() {
               >
                 View Map
               </Link>
-              <span className="text-gray-700">Welcome{user.email ? `, ${user.email}` : ''}</span>
+              <span className="text-gray-700">
+                {user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}
+              </span>
               <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
             </div>
           </div>
