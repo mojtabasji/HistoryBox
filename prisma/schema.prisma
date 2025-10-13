@@ -16,11 +16,10 @@ datasource db {
 model User {
   id          Int      @id @default(autoincrement())
   username    String?  @unique
-  email       String   @unique
-  firebaseUid String?  @unique
-  password    String?
+  email       String?  @unique
+  phoneNumber String?  @unique
   posts       Post[]
-  coins       Int      @default(5)
+  coins       Int      @default(20)
   unlocks     UserRegionUnlock[]
   createdAt   DateTime @default(now())
 }

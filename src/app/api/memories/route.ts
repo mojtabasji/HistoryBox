@@ -13,15 +13,11 @@ export async function POST(request: NextRequest) {
   if (!stUser) return NextResponse.json({ memories: [] }, { status: 200 });
 
     // Map SuperTokens user to Prisma user
-    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
-    if (!user && stUser.phoneNumber) {
-      user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
-    }
+    let user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber || stUser.id } });
     if (!user) {
       user = await prisma.user.create({
         data: {
-          firebaseUid: stUser.id,
-          email: `${stUser.id}@users.supertokens`, // placeholder, prisma requires unique email
+          email: `${stUser.id}@users.supertokens`,
           username: stUser.phoneNumber || stUser.id,
         },
       });
@@ -111,23 +107,34 @@ export async function POST(request: NextRequest) {
     try {
       const sb = getSupabaseServer();
       if (sb) {
-        // Ensure user exists in Supabase 'users' table
-        const { data: sbUser, error: sbUserErr } = await sb
+  const externalId = (user.username || '');
+        // Look up by firebase_uid first; insert if missing
+        let userIdRow: { id: number } | null = null;
+        const { data: existingRow, error: selectErr } = await sb
           .from('users')
-          .upsert(
-            { firebase_uid: user.firebaseUid || '', email: user.email },
-            { onConflict: 'firebase_uid' }
-          )
-          .select()
-          .single();
-
-        if (sbUserErr) throw sbUserErr;
+          .select('id')
+          .eq('firebase_uid', externalId)
+          .limit(1)
+          .maybeSingle();
+        if (selectErr) throw selectErr;
+        if (existingRow) {
+          userIdRow = existingRow;
+        } else {
+          const { data: insRows, error: insErr } = await sb
+            .from('users')
+            .insert({ firebase_uid: externalId, email: user.email })
+            .select('id')
+            .limit(1);
+          if (insErr) throw insErr;
+          userIdRow = insRows && insRows[0] ? insRows[0] : null;
+        }
+        if (!userIdRow) throw new Error('Failed to ensure Supabase user');
 
         // Insert memory into Supabase 'memories' table
         const { error: sbMemErr } = await sb
           .from('memories')
           .insert({
-            user_id: sbUser.id,
+            user_id: userIdRow.id,
             prisma_post_id: (post as { id: number }).id,
             title,
             description,

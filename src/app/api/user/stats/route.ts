@@ -9,11 +9,8 @@ export async function GET(req: NextRequest) {
   try {
     const stUser = await getAuthUserFromRequest(req);
     if (!stUser?.id) return NextResponse.json({ coins: 0 }, { status: 200 });
-    // Map SuperTokens user to Prisma user: prefer firebaseUid storing external id; fallback by phone (username)
-    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
-    if (!user && stUser.phoneNumber) {
-      user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
-    }
+    // Map SuperTokens user to Prisma user by phoneNumber primarily; fallback by username
+    const user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber || stUser.id } });
     if (!user) return NextResponse.json({ coins: 0 }, { status: 200 });
     // Primary: read coins from the User table (Supabase column)
     let coins: number | null = null;

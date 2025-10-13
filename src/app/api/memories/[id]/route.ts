@@ -9,10 +9,7 @@ export const dynamic = 'force-dynamic';
 async function getDbUser(req: NextRequest) {
   const stUser = await getAuthUserFromRequest(req);
   if (!stUser) return null;
-  let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
-  if (!user && stUser.phoneNumber) {
-    user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
-  }
+  const user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber || stUser.id } });
   return user;
 }
 

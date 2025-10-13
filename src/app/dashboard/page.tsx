@@ -41,6 +41,25 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchMemories = async () => {
       if (!user) return;
+      // Ensure server has synced/authenticated user to DB/Supabase before fetching
+      if (typeof window !== 'undefined') {
+        const hasPrismaSynced = sessionStorage.getItem('prismaSynced') === '1';
+        const hasSupabaseSynced = sessionStorage.getItem('supabaseSynced') === '1';
+        if (!hasPrismaSynced || !hasSupabaseSynced) {
+          try {
+            const res = await fetch('/api/auth/sync', { method: 'GET', cache: 'no-store', credentials: 'include' });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok) {
+              sessionStorage.setItem('prismaSynced', '1');
+              if (data?.supabase?.attempted && data?.supabase?.ok) {
+                sessionStorage.setItem('supabaseSynced', '1');
+              }
+            }
+          } catch {
+            // non-fatal
+          }
+        }
+      }
       setLoadingMemories(true);
       setError(null);
       try {
@@ -98,9 +117,10 @@ export default function Dashboard() {
               >
                 View Map
               </Link>
-              <span className="text-gray-700">
-                {user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}
-              </span>
+              <div className="text-right text-xs text-gray-700">
+                <div>{user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}</div>
+                <div className="text-[11px] text-gray-500">UserId: {user?.id}</div>
+              </div>
               <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
             </div>
           </div>
