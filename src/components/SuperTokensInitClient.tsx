@@ -42,6 +42,10 @@ export default function SuperTokensInitClient({ onReady }: { onReady?: () => voi
         recipeList: [
           Passwordless.init({
             contactMethod: "PHONE",
+            signInUpFeature: {
+              // Set default country to Iran (+98)
+              defaultCountry: "IR",
+            },
           }),
           Session.init({
             tokenTransferMethod: 'cookie',
