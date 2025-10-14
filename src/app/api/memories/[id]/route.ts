@@ -9,7 +9,15 @@ export const dynamic = 'force-dynamic';
 async function getDbUser(req: NextRequest) {
   const stUser = await getAuthUserFromRequest(req);
   if (!stUser) return null;
-  const user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber || stUser.id } });
+  // Prefer SuperTokens UUID stored in username; fallback to phoneNumber-based username for legacy rows
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { username: stUser.id },
+        ...(stUser.phoneNumber ? [{ username: stUser.phoneNumber }] : []),
+      ],
+    },
+  });
   return user;
 }
 

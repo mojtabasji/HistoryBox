@@ -10,7 +10,7 @@ async function getSessionUser(req: NextRequest) {
     const meRes = await fetch(meUrl.toString(), { headers: { cookie: req.headers.get('cookie') ?? '' }, cache: 'no-store' });
     if (!meRes.ok) return null;
     const data = await meRes.json();
-    return data?.user ?? null;
+  return data?.user ?? null;
   } catch {
     return null;
   }
@@ -18,14 +18,14 @@ async function getSessionUser(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const userInfo = await getSessionUser(req);
-    if (!userInfo) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  const userInfo = await getSessionUser(req);
+  if (!userInfo) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
     const regionHash = body?.regionHash as string | undefined;
     if (!regionHash) return NextResponse.json({ error: 'regionHash required' }, { status: 400 });
 
-    const dbUser = await prisma.user.findUnique({ where: { email: userInfo.email as string } });
+  const dbUser = await prisma.user.findUnique({ where: { username: userInfo.id as string } });
     if (!dbUser) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     const region = await prisma.region.findFirst({ where: { OR: [{ geohash: regionHash }, { hash: regionHash }] } });
