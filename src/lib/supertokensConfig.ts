@@ -29,36 +29,31 @@ SuperTokens.init({
     Session.init(),
     Passwordless.init({
       contactMethod: "PHONE",
-      flowType: "USER_INPUT_CODE_AND_MAGIC_LINK",
+      flowType: "USER_INPUT_CODE",
       override: {
         functions: (originalImpl) => {
           return {
             ...originalImpl,
             // Hook after OTP / magic link is consumed to ensure a DB user exists
-            consumeCode: async (input) => {
+            async consumeCode(input) {
               const response = await originalImpl.consumeCode(input);
-              try {
-                if (response.status === "OK") {
-                  const u: { id?: string; phoneNumbers?: Array<{ phoneNumber?: string }>; phoneNumber?: string } | undefined =
-                    (response as unknown as { user?: { id?: string; phoneNumbers?: Array<{ phoneNumber?: string }>; phoneNumber?: string } }).user;
-                  const superTokensUserId = typeof u?.id === "string" ? u!.id : undefined;
-                  // SuperTokens user can expose phone via phoneNumbers array
-                  const phoneNumber: string | undefined =
-                    u?.phoneNumbers?.[0]?.phoneNumber ?? u?.phoneNumber ?? undefined;
 
-                  if (superTokensUserId) {
-                    // Upsert keyed by UUID (username), and keep phoneNumber in sync
-                    await prisma.user.upsert({
-                      where: { username: superTokensUserId },
-                      update: { phoneNumber: phoneNumber ?? undefined },
-                      create: { username: superTokensUserId, phoneNumber: phoneNumber ?? undefined },
-                    });
-                  }
+              if (response.status === "OK") {
+                const { user } = response;
+                const superTokensUserId = user.id;
+                const phoneNumber = Array.isArray(user.phoneNumbers) && user.phoneNumbers.length > 0 ? user.phoneNumbers[0] : null;
+
+                try {
+                  await prisma.user.upsert({
+                    where: { username: superTokensUserId },
+                    update: { phoneNumber },
+                    create: { username: superTokensUserId, phoneNumber },
+                  });
+                } catch (err) {
+                  console.error("Failed to sync user to DB after consumeCode:", err);
                 }
-              } catch (err) {
-                // Don't block auth/session creation if DB write fails – log and proceed
-                console.error("Failed to sync user to DB after consumeCode:", err);
               }
+
               return response;
             },
           };
