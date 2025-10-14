@@ -41,25 +41,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchMemories = async () => {
       if (!user) return;
-      // Ensure server has synced/authenticated user to DB/Supabase before fetching
-      if (typeof window !== 'undefined') {
-        const hasPrismaSynced = sessionStorage.getItem('prismaSynced') === '1';
-        const hasSupabaseSynced = sessionStorage.getItem('supabaseSynced') === '1';
-        if (!hasPrismaSynced || !hasSupabaseSynced) {
-          try {
-            const res = await fetch('/api/auth/sync', { method: 'GET', cache: 'no-store', credentials: 'include' });
-            const data = await res.json().catch(() => ({}));
-            if (res.ok) {
-              sessionStorage.setItem('prismaSynced', '1');
-              if (data?.supabase?.attempted && data?.supabase?.ok) {
-                sessionStorage.setItem('supabaseSynced', '1');
-              }
-            }
-          } catch {
-            // non-fatal
-          }
-        }
-      }
+      // Removed legacy /api/auth/sync calls (unused)
       setLoadingMemories(true);
       setError(null);
       try {
