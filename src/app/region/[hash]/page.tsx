@@ -24,7 +24,7 @@ type ApiResponse = {
 
 export default function RegionPage() {
   const params = useParams<{ hash: string }>();
-  const regionHash = params.hash;
+  const regionHash = params?.hash;
   const router = useRouter();
   const { user, setCoins: setGlobalCoins } = useAuth();
   const [data, setData] = useState<ApiResponse | null>(null);
