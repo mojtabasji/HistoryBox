@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   try {
     const stUser = await getAuthUserFromRequest(req);
+    console.log('1: Authenticated user:', stUser);
     if (!stUser?.id) return NextResponse.json({ coins: 0 }, { status: 200 });
     // Map SuperTokens user to Prisma user by phoneNumber primarily; fallback by username
     const user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber || stUser.id } });
