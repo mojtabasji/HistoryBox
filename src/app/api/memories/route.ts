@@ -177,16 +177,16 @@ export async function GET(request: NextRequest) {
     // Resolve user via Edge /api/auth/me using incoming cookies
   const stUser = await getAuthUserFromRequest(request);
   if (!stUser) return NextResponse.json({ memories: [] }, { status: 200 });
-    let user = await prisma.user.findFirst({ where: { firebaseUid: stUser.id } });
+    let user = await prisma.user.findFirst({ where: { username: stUser.id } });
     if (!user && stUser.phoneNumber) {
       user = await prisma.user.findFirst({ where: { username: stUser.phoneNumber } });
     }
     if (!user) {
       user = await prisma.user.create({
         data: {
-          firebaseUid: stUser.id,
+          username: stUser.id,
           email: `${stUser.id}@users.supertokens`,
-          username: stUser.phoneNumber || stUser.id,
+          phoneNumber: stUser.phoneNumber || stUser.id,
         },
       });
     }
