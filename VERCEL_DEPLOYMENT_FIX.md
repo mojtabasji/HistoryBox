@@ -29,20 +29,14 @@ git push origin main
 ### 2. Set Environment Variables in Vercel
 In your Vercel dashboard, add these environment variables:
 
-**Firebase (Public - Client Side):**
+**SuperTokens + SMS (Auth)**
 ```
-NEXT_PUBLIC_FIREBASE_API_KEY=*********************************
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN==*********************************
-NEXT_PUBLIC_FIREBASE_PROJECT_ID==*********************************
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET==*********firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID==*******************
-NEXT_PUBLIC_FIREBASE_APP_ID==*********************************
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID==*********************************
-```
-
-**Google Maps (Public - Client Side):**
-```
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY==*********************************
+SUPERTOKENS_CONNECTION_URI=https://your-core.example.com
+SUPERTOKENS_API_KEY=your-core-api-key-if-required
+NEXT_PUBLIC_API_DOMAIN=https://your-app.example.com
+NEXT_PUBLIC_WEBSITE_DOMAIN=https://your-app.example.com
+SMS_API_URL=https://your-sms-gateway.example.com/send
+SMS_API_TOKEN=your-sms-gateway-token
 ```
 
 **Cloudinary (Private - Server Side):**
@@ -132,8 +126,8 @@ const nextConfig = {
 ## 📊 Expected Results
 
 After successful deployment:
-- ✅ Authentication will work (Firebase)
-- ✅ Maps will display (Google Maps)
+- ✅ Authentication will work (SuperTokens Passwordless SMS)
+- ✅ Maps will display (Leaflet + OpenStreetMap)
 - ✅ Image uploads will work (Cloudinary)
 - ✅ All pages will be accessible
 - ✅ No ESLint errors from generated files
