@@ -43,8 +43,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!resp.ok) {
-      const err = await resp.json().catch(() => null);
-      const message = (err as any)?.error || `Payment service error (${resp.status})`;
+      const err = (await resp.json().catch(() => null)) as { error?: string } | null;
+      const message = err?.error ?? `Payment service error (${resp.status})`;
       return NextResponse.json({ error: message }, { status: 502 });
     }
 
