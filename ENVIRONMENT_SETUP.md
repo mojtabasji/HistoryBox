@@ -182,3 +182,23 @@ Notes:
 3. **Set up production environment variables** when deploying
 
 Your credentials are now secure and your application is ready for both development and production! 🔐✨
+
+## 💳 Payment Service (Bytecraft Pay)
+
+To enable coin purchases via the centralized payment service, add these environment variables:
+
+```env
+# Payment service configuration
+PAY_BASE_URL=https://pay.bytecraft.ir
+PAY_API_KEY=hereIsTheTestAPIKey
+PAY_SERVICE_ID=historybox
+
+# Optional: override callback URL if not set in the payment admin panel
+# e.g., https://historybox.bytecraft.ir/coins/callback
+PAY_CALLBACK_URL=
+```
+
+Notes:
+- The app posts to `${PAY_BASE_URL}/api/create-payment` and expects a `payment_url`.
+- After payment, the service redirects to your configured callback. Set it to `/coins/callback` in the admin panel (or via `PAY_CALLBACK_URL`).
+- Verification is performed by the app at `/api/coins/verify/:transaction_id` against `${PAY_BASE_URL}/api/verify/:transaction_id` and credits coins on success.

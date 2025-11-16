@@ -66,3 +66,12 @@ export function getCloudinaryConfig() {
     api_secret: process.env.CLOUDINARY_API_SECRET,
   };
 }
+
+// Payment service configuration (server-side only)
+export function getPaymentConfig() {
+  const baseUrl = process.env.PAY_BASE_URL || 'https://pay.bytecraft.ir';
+  const apiKey = process.env.PAY_API_KEY || '';
+  const serviceId = process.env.PAY_SERVICE_ID || 'historybox';
+  const callbackUrl = process.env.PAY_CALLBACK_URL || '';
+  return { baseUrl, apiKey, serviceId, callbackUrl };
+}

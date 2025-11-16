@@ -1,28 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getPaymentConfig } from '@/lib/config';
+import { PLAN_MAP, isValidPlan, generateOrderId, type PlanId } from '@/lib/payments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const PLAN_MAP: Record<string, { coins: number; priceCents: number }> = {
-  starter: { coins: 10, priceCents: 199 },
-  lite: { coins: 50, priceCents: 799 },
-  standard: { coins: 120, priceCents: 1499 },
-  pro: { coins: 300, priceCents: 3499 },
-  mega: { coins: 700, priceCents: 6999 },
-};
-
 export async function POST(req: NextRequest) {
   try {
     const { planId } = (await req.json()) as { planId?: string };
-    if (!planId || !(planId in PLAN_MAP)) {
+    if (!planId || !isValidPlan(planId)) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
-    // In a real integration, create a payment session (Stripe/Checkout.com/etc.)
-    // For now, redirect back to /coins with a mocked success.
-    const url = new URL('/coins', req.url);
-    url.searchParams.set('status', 'success');
-    url.searchParams.set('plan', planId);
-    return NextResponse.json({ url: url.toString() });
+
+    const { baseUrl, apiKey, serviceId, callbackUrl } = getPaymentConfig();
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Payment API not configured' }, { status: 500 });
+    }
+
+    const plan = PLAN_MAP[planId as PlanId];
+    const order_id = generateOrderId(planId as PlanId);
+
+    const body: Record<string, unknown> = {
+      service_id: serviceId,
+      order_id,
+      amount: plan.priceIrr,
+      currency: 'IRR',
+      description: `${planId}: ${plan.coins} coins`,
+    };
+    if (callbackUrl) {
+      body['callback_url'] = callbackUrl;
+    }
+
+    const resp = await fetch(`${baseUrl.replace(/\/$/, '')}/api/create-payment`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+      // Ensure server-to-server, do not cache
+      cache: 'no-store',
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => null);
+      const message = (err as any)?.error || `Payment service error (${resp.status})`;
+      return NextResponse.json({ error: message }, { status: 502 });
+    }
+
+    const data = (await resp.json()) as { payment_url?: string };
+    if (!data?.payment_url) {
+      return NextResponse.json({ error: 'Missing payment_url from service' }, { status: 502 });
+    }
+
+    return NextResponse.json({ url: data.payment_url, order_id });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Failed to start checkout';
     return NextResponse.json({ error: msg }, { status: 500 });
