@@ -61,34 +61,51 @@ SuperTokens.init({
       },
       smsDelivery: {
         service: {
-          sendSms: async (input) => {
-            const phoneNumber = input.phoneNumber;
-            if (!phoneNumber) throw new Error("Missing phone number for SMS delivery");
+          // Simple in-memory throttle to prevent re-sending codes within 60 seconds per phone number.
+          // Note: in serverless / multi-instance deployments this won't be global. For a robust
+          // solution persist last-send timestamps in a shared store (Redis / DB).
+          sendSms: (() => {
+            const lastSent = new Map<string, number>();
+            const COOLDOWN_MS = 60 * 1000; // 1 minute
 
-            // Build message
-            const codeMessage = input.userInputCode
-              ? `Your History Box code is ${input.userInputCode}`
-              : `Use this link to sign in: ${input.urlWithLinkCode}`;
+            return async (input: { phoneNumber?: string; userInputCode?: string; urlWithLinkCode?: string }) => {
+              const phoneNumber = input.phoneNumber;
+              if (!phoneNumber) throw new Error("Missing phone number for SMS delivery");
 
-            // Validate required SMS API settings
-            if (!SMS_API_URL || !SMS_API_TOKEN) {
-              throw new Error("SMS API configuration missing. Please set SMS_API_URL and SMS_API_TOKEN in environment.");
-            }
+              const now = Date.now();
+              const last = lastSent.get(phoneNumber) ?? 0;
+              if (now - last < COOLDOWN_MS) {
+                // Skip sending if within cooldown. Resolve silently so SuperTokens continues.
+                return;
+              }
 
-            // POST to external SMS service
-            const res = await fetch(SMS_API_URL, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${SMS_API_TOKEN}`,
-              },
-              body: JSON.stringify({ phone: phoneNumber, message: codeMessage }),
-            });
-            if (!res.ok) {
-              const body = await res.text().catch(() => "");
-              throw new Error(`SMS gateway responded with ${res.status}. ${body}`);
-            }
-          },
+              // Build message
+              const codeMessage = input.userInputCode
+                ? `Your History Box login code: \n کد ورود به برنامه: ${input.userInputCode} \n #${input.userInputCode}`
+                : `Use this link to sign in: ${input.urlWithLinkCode}`;
+
+              // Validate required SMS API settings
+              if (!SMS_API_URL || !SMS_API_TOKEN) {
+                throw new Error("SMS API configuration missing. Please set SMS_API_URL and SMS_API_TOKEN in environment.");
+              }
+
+              // POST to external SMS service
+              const res = await fetch(SMS_API_URL, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${SMS_API_TOKEN}`,
+                },
+                body: JSON.stringify({ phone: phoneNumber, message: codeMessage }),
+              });
+              if (!res.ok) {
+                const body = await res.text().catch(() => "");
+                throw new Error(`SMS gateway responded with ${res.status}. ${body}`);
+              }
+
+              lastSent.set(phoneNumber, now);
+            };
+          })(),
         },
       },
     }),
