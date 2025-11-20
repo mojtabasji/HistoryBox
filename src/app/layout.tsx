@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SuperTokensAuthProvider } from "@/contexts/SuperTokensAuthContext";
-import CoinsBadge from "@/components/CoinsBadge";
 
 export const metadata: Metadata = {
   title: "History Box",
@@ -17,8 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         <SuperTokensAuthProvider>
-          {/* Global UI overlays */}
-          <div className="fixed right-3 top-3 z-[10000]"><CoinsBadge /></div>
+          {/* Global UI overlays (moved to homepage) */}
           {children}
         </SuperTokensAuthProvider>
       </body>

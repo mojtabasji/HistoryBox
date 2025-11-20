@@ -10,6 +10,7 @@ import marker2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useMap } from 'react-leaflet';
 import SearchControl from '../components/SearchControl';
+import CoinsBadge from '@/components/CoinsBadge';
 import { Spinner } from '@/components/Loading';
 
 const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
@@ -425,6 +426,11 @@ export default function Home() {
 
   {/* Locate me button */}
   <LocateMe map={mapInstance} />
+
+      {/* Coins badge shown under header (page-only) */}
+      <div className="pointer-events-auto absolute top-16 right-3 z-[1000]">
+        <CoinsBadge rect />
+      </div>
 
       {/* Bottom overlay hint */}
       <div className="pointer-events-none absolute left-0 right-0 bottom-0 p-3 z-[1000]">
