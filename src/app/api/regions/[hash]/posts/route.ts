@@ -77,8 +77,9 @@ export async function GET(req: NextRequest, ctx: { params: Promise<Params> | Par
       canUnlock: true,
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : 'Failed to load posts';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Log the error server-side, but return a generic message to avoid exposing internal details.
+    console.error('Error loading region posts:', e);
+    return NextResponse.json({ error: 'Failed to load region posts' }, { status: 500 });
   }
 }
 

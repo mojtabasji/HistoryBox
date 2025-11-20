@@ -52,6 +52,7 @@ export default function Home() {
   const [clusterTotals, setClusterTotals] = useState<Record<number, number>>({});
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
   const [unlockRequested, setUnlockRequested] = useState<Record<string, boolean>>({});
+  const [zoomedToId, setZoomedToId] = useState<number | null>(null);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -146,10 +147,14 @@ export default function Home() {
     recompute();
     mapInstance.on('moveend', recompute);
     mapInstance.on('zoomend', recompute);
+    // Clear any remembered zoomed-to marker when user moves/zooms
+    const clearZoomed = () => setZoomedToId(null);
+    mapInstance.on('moveend', clearZoomed);
     return () => {
       try {
         mapInstance.off('moveend', recompute);
         mapInstance.off('zoomend', recompute);
+        mapInstance.off('moveend', clearZoomed);
       } catch {}
     };
   }, [mapInstance, regions]);
@@ -258,7 +263,29 @@ export default function Home() {
               key={r.id}
               position={[r.latitude, r.longitude] as [number, number]}
               icon={icon as Icon | undefined}
-              eventHandlers={{ popupopen: onPopupOpen }}
+              eventHandlers={{
+                popupopen: onPopupOpen,
+                click: (e: unknown) => {
+                  const ev = e as { target?: { closePopup?: () => void } };
+                  try {
+                    if (!mapInstance) return;
+                    const total = clusterTotals[r.id] ?? r.postCount;
+                    const combined = total > r.postCount;
+                    const currentZoom = mapInstance.getZoom?.() ?? 0;
+                    const zoomThreshold = 12;
+                    if (combined && zoomedToId !== r.id && currentZoom < zoomThreshold) {
+                          const targetZoom = Math.min(20, Math.max(currentZoom + 4, zoomThreshold));
+                      // Zoom first and make sure popup does not remain open on this click
+                      mapInstance.flyTo([r.latitude, r.longitude], targetZoom, { duration: 0.9 });
+                      try { ev.target?.closePopup?.(); } catch {}
+                      setZoomedToId(r.id);
+                      setTimeout(() => setZoomedToId(null), 6000);
+                    }
+                  } catch {
+                    // ignore
+                  }
+                },
+              }}
             >
               <Popup>
                 <div className="w-56">
@@ -280,7 +307,41 @@ export default function Home() {
                     {isUnlocked ? (truncate(r.description || r.title, 5)) : (truncate(r.description || r.title, 5) + ' …locked')}
                   </div>
                   <div className="mt-2 flex gap-2">
-                    <Link href={`/region/${r.geohash}`} className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs">{isUnlocked ? 'Show' : 'Unlock'}</Link>
+                            <button
+                              onClick={async () => {
+                                // Two-step behavior: if this marker is an aggregated representative (combined)
+                                // and we haven't recently zoomed to it, first zoom in. A second click will navigate.
+                                try {
+                                  if (!mapInstance) {
+                                    // Fallback: navigate directly
+                                    window.location.href = `/region/${r.geohash}`;
+                                    return;
+                                  }
+                                  const total = clusterTotals[r.id] ?? r.postCount;
+                                  const combined = total > r.postCount;
+                                  const currentZoom = mapInstance.getZoom?.() ?? 0;
+                                  const zoomThreshold = 10; // if below this, we'll zoom first
+
+                                  if (combined && zoomedToId !== r.id && currentZoom < zoomThreshold) {
+                                  const targetZoom = Math.min(17, Math.max(currentZoom + 4, zoomThreshold));
+                                    mapInstance.flyTo([r.latitude, r.longitude], targetZoom, { duration: 0.9 });
+                                    setZoomedToId(r.id);
+                                    // Clear the zoomed hint after a short time so next action returns to normal
+                                    setTimeout(() => setZoomedToId(null), 6000);
+                                    return;
+                                  }
+
+                                  // Otherwise navigate to the region page
+                                  window.location.href = `/region/${r.geohash}`;
+                                } catch {
+                                  // Best-effort navigation on errors
+                                  window.location.href = `/region/${r.geohash}`;
+                                }
+                              }}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              {isUnlocked ? 'Show' : 'Unlock'}
+                            </button>
                   </div>
                 </div>
               </Popup>

@@ -55,8 +55,8 @@ export async function GET() {
 
     return NextResponse.json({ regions: payload });
   } catch (error) {
+    // Log full error server-side but return a generic message to the client.
     console.error('Error fetching regions:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch regions';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load regions' }, { status: 500 });
   }
 }
