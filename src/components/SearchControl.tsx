@@ -19,7 +19,7 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
   const debounce = useRef<number | null>(null);
 
   const wrapperClass = useMemo(
-    () => `pointer-events-auto bg-white/90 backdrop-blur rounded-lg shadow p-2 w-[min(92vw,520px)] ${className}`,
+    () => `pointer-events-auto bg-white/90 backdrop-blur rounded-lg shadow relative h-10 flex items-center px-2 w-[min(92vw,520px)] ${className}`,
     [className]
   );
 
@@ -79,14 +79,14 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
 
   return (
     <div className={wrapperClass}>
-      <div className="relative">
+      <div className="relative flex-1">
         <input
           type="text"
           value={q}
           onChange={onChange}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full pr-9 pl-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full pr-9 pl-3 h-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         {q && (
           <button
@@ -100,7 +100,7 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
         )}
       </div>
       {open && (results.length > 0 || loading) && (
-        <div className="mt-2 max-h-72 overflow-auto rounded-md border border-gray-200 bg-white shadow">
+        <div className="absolute left-0 right-0 top-full mt-2 max-h-72 overflow-auto rounded-md border border-gray-200 bg-white shadow z-50">
           {loading && (
             <div className="px-3 py-2 text-sm text-gray-500 flex items-center gap-2">
               <Spinner size="sm" />

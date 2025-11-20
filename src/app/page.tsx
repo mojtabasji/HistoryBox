@@ -375,39 +375,50 @@ export default function Home() {
         })}
       </LeafletMap>
 
-      {/* Top overlay bar */}
+      {/* Top overlay header */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 p-3 z-[1000]">
-        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-3">
-          {/* Left: Search on desktop */}
-          <div className="hidden md:block pointer-events-auto">
-            <SearchControl map={mapInstance} />
+        <div className="grid grid-cols-3 items-center gap-3">
+          {/* Left: Logo + App name */}
+          <div className="pointer-events-auto flex items-center gap-2 h-10">
+            <Link href="/" className="inline-flex items-center justify-center h-10 w-10 rounded-md bg-indigo-600 text-white shadow font-bold select-none">HB</Link>
+            <span className="h-10 flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide text-indigo-700 select-none">History Box</span>
           </div>
-          {/* Center: App name */}
-          <div className="justify-self-center">
-            <div className="pointer-events-auto select-none bg-white/70 backdrop-blur rounded-full px-4 py-1 shadow">
-              <span className="text-2xl font-bold tracking-wide text-indigo-700">History Box</span>
-            </div>
+
+          {/* Center: Search */}
+          <div className="pointer-events-auto justify-self-center hidden md:block">
+            <SearchControl map={mapInstance} className="w-[min(92vw,420px)]" />
           </div>
-          {/* Right: Auth actions */}
+
+          {/* Right: Square icon buttons */}
           <div className="pointer-events-auto justify-self-end flex items-center gap-2 z-[1001]">
+            {/* Grid toggle icon button */}
             <button
               onClick={() => setShowGrid((s) => !s)}
-              className={`px-3 py-1 rounded text-sm shadow border ${showGrid ? 'bg-white text-gray-700' : 'bg-white/80 backdrop-blur text-gray-700'}`}
-              title="Toggle region grid"
+              className={`h-10 w-10 rounded-md shadow border flex items-center justify-center ${showGrid ? 'bg-white text-gray-800' : 'bg-white/80 backdrop-blur text-gray-800'}`}
+              title={showGrid ? 'Hide grid' : 'Show grid'}
+              aria-label="Toggle region grid"
             >
-              {showGrid ? 'Hide Grid' : 'Show Grid'}
+              {/* grid icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+              </svg>
             </button>
-            {user ? (
-              <>
-                <Link href="/dashboard" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm shadow">Dashboard</Link>
-                <Link href="/add-memory" className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm shadow">Add Memory</Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm shadow">Sign In</Link>
-                <Link href="/signup" className="bg-white/80 backdrop-blur border text-gray-700 px-3 py-1 rounded text-sm shadow">Create Account</Link>
-              </>
-            )}
+
+                {user ? (
+                  <>
+                    <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm" title="Dashboard" aria-label="Dashboard">
+                      Dashboard
+                    </Link>
+                    <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm" title="Add Memory" aria-label="Add Memory">
+                      Add Memory
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm shadow">Sign In</Link>
+                    <Link href="/signup" className="bg-white/80 backdrop-blur border text-gray-700 px-3 py-1 rounded text-sm shadow">Create Account</Link>
+                  </>
+                )}
           </div>
         </div>
       </div>
