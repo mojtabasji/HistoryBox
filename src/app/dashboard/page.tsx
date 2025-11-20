@@ -99,6 +99,12 @@ export default function Dashboard() {
               >
                 View Map
               </Link>
+              <Link
+                href="/add-memory"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Add Memory
+              </Link>
               <div className="text-right text-xs text-gray-700">
                 <div>{user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}</div>
                 <div className="text-[11px] text-gray-500">UserId: {user?.id}</div>
@@ -113,26 +119,7 @@ export default function Dashboard() {
         <div className="px-4 py-6 sm:px-0">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Your Memories</h2>
-            <div className="space-x-2">
-              <Link
-                href="/coins"
-                className="inline-block bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Buy Coins
-              </Link>
-              <Link
-                href="/"
-                className="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Explore Map
-              </Link>
-              <a
-                href="/add-memory"
-                className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Add Memory
-              </a>
-            </div>
+            {/* removed duplicate action buttons (moved Add Memory into header) */}
           </div>
 
           {loadingMemories && (
