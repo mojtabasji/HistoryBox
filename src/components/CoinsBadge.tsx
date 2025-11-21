@@ -29,7 +29,7 @@ export default function CoinsBadge({ className, rect = false }: { className?: st
       >
         <path d="M12 2C6.477 2 2 4.239 2 7s4.477 5 10 5 10-2.239 10-5-4.477-5-10-5Zm0 12c-5.523 0-10-2.239-10-5v3c0 2.761 4.477 5 10 5s10-2.239 10-5V9c0 2.761-4.477 5-10 5Zm0 4c-5.523 0-10-2.239-10-5v3c0 2.761 4.477 5 10 5s10-2.239 10-5v-3c0 2.761-4.477 5-10 5Z" />
       </svg>
-      <span className={classNames('text-sm font-semibold tabular-nums', rect ? '' : '')}>{coins === null ? '—' : coins}</span>
+      <span className={classNames('text-sm font-semibold tabular-nums', rect ? '' : '')}>{coins === null ? '20' : coins}</span>
     </div>
   );
 }

@@ -22,3 +22,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans);
 }
+
+.btn-h {
+  height: 40px;
+}
+
+.btn-w {
+  width: 40px;
+}
+
+.ctr {
+  margin: auto;
+  text-align: center;
+}
