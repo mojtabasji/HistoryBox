@@ -39,3 +39,7 @@ body {
 .bottom-35 {
   bottom: calc(var(--spacing) * 35);
 }
+
+.mx-h-6 {
+  max-height: 600px;
+}

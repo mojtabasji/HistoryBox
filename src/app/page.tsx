@@ -38,6 +38,19 @@ type RegionsApiRegion = {
   sample?: { latitude?: number; longitude?: number; imageUrl?: string; title?: string; description?: string | null };
 };
 
+type RecentMemory = {
+  id: number;
+  title: string;
+  description?: string | null;
+  caption?: string | null;
+  imageUrl: string;
+  latitude: number;
+  longitude: number;
+  address?: string | null;
+  memoryDate?: string | null;
+  createdAt: string;
+};
+
 export default function Home() {
   const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
@@ -53,10 +66,34 @@ export default function Home() {
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
   const [unlockRequested, setUnlockRequested] = useState<Record<string, boolean>>({});
   const [zoomedToId, setZoomedToId] = useState<number | null>(null);
+  const [recent, setRecent] = useState<RecentMemory[]>([]);
+  const [recentLoading, setRecentLoading] = useState(false);
+  const [recentError, setRecentError] = useState<string | null>(null);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Load recent memories globally (not user-specific)
+  useEffect(() => {
+    let cancelled = false;
+    const loadRecent = async () => {
+      setRecentLoading(true);
+      setRecentError(null);
+      try {
+        const res = await fetch('/api/memories/recent?limit=20', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Failed to load recent items');
+        if (!cancelled) setRecent((data.memories || []) as RecentMemory[]);
+      } catch (e) {
+        if (!cancelled) setRecentError(e instanceof Error ? e.message : 'Failed to load recent items');
+      } finally {
+        if (!cancelled) setRecentLoading(false);
+      }
+    };
+    loadRecent();
+    return () => { cancelled = true; };
   }, []);
 
   useEffect(() => {
@@ -394,14 +431,23 @@ export default function Home() {
             {/* Grid toggle icon button */}
             <button
               onClick={() => setShowGrid((s) => !s)}
-              className={`btn-h btn-w rounded-md shadow border flex items-center justify-center ${showGrid ? 'bg-white text-gray-800' : 'bg-white/80 backdrop-blur text-gray-800'}`}
+              className={`btn-h btn-w rounded-md shadow border flex items-center justify-center transition-colors ${showGrid ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
               title={showGrid ? 'Hide grid' : 'Show grid'}
               aria-label="Toggle region grid"
+              aria-pressed={showGrid}
             >
               {/* grid icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-                <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
-              </svg>
+              {showGrid ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
+                  <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-gray-700">
+                  <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+                </svg>
+              )}
+              {/* active dot indicator */}
+              {showGrid && <span className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full" aria-hidden="true" />}
             </button>
 
                 {user ? (
@@ -428,6 +474,47 @@ export default function Home() {
 
   {/* Custom zoom controls */}
   <CustomZoom map={mapInstance} />
+
+      {/* Left: Recent items list (md+) */}
+      <div className="pointer-events-none absolute left-0 top-20 p-3 z-[1000] hidden md:block mx-h-6">
+        <div className="pointer-events-auto w-72 h-full bg-white/80 backdrop-blur rounded-lg shadow border overflow-hidden flex flex-col">
+          <div className="px-3 py-2 border-b text-sm font-semibold text-gray-800">Recent Locations</div>
+          <div className="flex-1 overflow-auto">
+            {recentLoading && (
+              <div className="p-3 text-sm text-gray-600">Loading…</div>
+            )}
+            {recentError && (
+              <div className="p-3 text-sm text-yellow-800 bg-yellow-50">{recentError}</div>
+            )}
+            {!recentLoading && !recentError && recent.length === 0 && (
+              <div className="p-3 text-sm text-gray-600">No recent items yet.</div>
+            )}
+            {recent.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => {
+                  try {
+                    if (mapInstance) {
+                      mapInstance.flyTo([m.latitude, m.longitude] as [number, number], Math.max(mapInstance.getZoom?.() ?? 2, 14), { duration: 0.9 });
+                    }
+                  } catch {}
+                }}
+                className="w-full text-left px-2 py-2 hover:bg-gray-50 flex items-center gap-2"
+                title={m.title}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={m.imageUrl} alt={m.title || 'memory'} className="h-10 w-14 object-cover rounded" />
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-gray-900 line-clamp-1">{m.title || 'Memory'}</div>
+                  <div className="text-[11px] text-gray-600 line-clamp-1" suppressHydrationWarning>
+                    {new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Coins badge shown under header (page-only) */}
       <div className="pointer-events-auto absolute top-16 right-3 z-[1000]">
