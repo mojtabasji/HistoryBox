@@ -35,3 +35,7 @@ body {
   margin: auto;
   text-align: center;
 }
+
+.bottom-35 {
+  bottom: calc(var(--spacing) * 35);
+}

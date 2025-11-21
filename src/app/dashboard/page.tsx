@@ -48,12 +48,15 @@ export default function Dashboard() {
         const res = await fetch('/api/memories');
         const data = await res.json();
         if (!res.ok) {
-          const prefix = res.status === 401 ? 'Auth error' : 'Server error';
-          throw new Error(`${prefix}: ${data.error || 'Failed to load memories'}`);
+          // Show a friendly message for backend/db issues
+          const friendly = res.status >= 500
+            ? 'We\'re having trouble connecting to the database. Please try again shortly.'
+            : (res.status === 401 ? 'Please sign in to view your memories.' : (data?.error || 'Failed to load memories'));
+          throw new Error(friendly);
         }
         setMemories(data.memories || []);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load memories');
+        setError(e instanceof Error ? e.message : 'We\'re having trouble connecting to the database. Please try again shortly.');
       } finally {
         setLoadingMemories(false);
       }
@@ -129,7 +132,7 @@ export default function Dashboard() {
           )}
 
           {error && (
-            <div className="border rounded-lg p-4 bg-red-50 text-red-700">
+            <div className="border rounded-lg p-4 bg-yellow-50 text-yellow-800">
               {error}
             </div>
           )}

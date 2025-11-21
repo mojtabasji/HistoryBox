@@ -17,7 +17,6 @@ const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContaine
 const TileLayer = dynamic(() => import('react-leaflet').then(m => m.TileLayer), { ssr: false });
 const Marker = dynamic(() => import('react-leaflet').then(m => m.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(m => m.Popup), { ssr: false });
-const ZoomControl = dynamic(() => import('react-leaflet').then(m => m.ZoomControl), { ssr: false });
 const Rectangle = dynamic(() => import('react-leaflet').then(m => m.Rectangle), { ssr: false });
 import { decodeGeohashBox } from '@/lib/geohash';
 
@@ -209,7 +208,7 @@ export default function Home() {
           attribution='&copy; OpenStreetMap contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <ZoomControl position="bottomright" />
+        {/* Default zoom control removed; custom control rendered as overlay */}
         <MapInstanceSetter onReady={setMapInstance} />
         {(visibleRegions.length ? visibleRegions : regions).map((r) => {
           const totalCount = clusterTotals[r.id] ?? r.postCount;
@@ -427,6 +426,9 @@ export default function Home() {
   {/* Locate me button */}
   <LocateMe map={mapInstance} />
 
+  {/* Custom zoom controls */}
+  <CustomZoom map={mapInstance} />
+
       {/* Coins badge shown under header (page-only) */}
       <div className="pointer-events-auto absolute top-16 right-3 z-[1000]">
         <CoinsBadge rect />
@@ -479,15 +481,13 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        // Smooth animate to location
-        map.flyTo([latitude, longitude], Math.max(map.getZoom(), 15), { duration: 1.0 });
-        // Drop a temporary pulse marker
+        map.flyTo([latitude, longitude], Math.max(map.getZoom?.() ?? 2, 15), { duration: 1.0 });
         (async () => {
           const L = await import('leaflet');
           const marker = L.circleMarker([latitude, longitude], {
             radius: 8,
-            color: '#2563eb', // indigo-600
-            fillColor: '#3b82f6', // blue-500
+            color: '#2563eb',
+            fillColor: '#3b82f6',
             fillOpacity: 0.6,
             weight: 2,
           }).addTo(map);
@@ -506,7 +506,7 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
   };
 
   return (
-    <div className="absolute right-3 bottom-24 z-[1000] flex flex-col items-end gap-2">
+    <div className="absolute right-3 bottom-35 z-[1000] flex flex-col items-end gap-2">
       {err && (
         <div className="bg-white/90 backdrop-blur text-red-700 text-xs rounded px-2 py-1 shadow max-w-[70vw]">
           {err}
@@ -514,7 +514,7 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       )}
       <button
         onClick={onClick}
-        className="h-11 w-11 bg-white text-gray-700 rounded-full shadow flex items-center justify-center focus:outline-none hover:bg-gray-50"
+        className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center focus:outline-none hover:bg-white"
         title="Go to my location"
         aria-label="Go to my location"
       >
@@ -528,6 +528,42 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
           </svg>
         )}
       </button>
+    </div>
+  );
+}
+
+// Custom zoom control overlay
+function CustomZoom({ map }: { map: LeafletMapType | null }) {
+  const onZoomIn = () => {
+    try { map?.zoomIn(); } catch {}
+  };
+  const onZoomOut = () => {
+    try { map?.zoomOut(); } catch {}
+  };
+  return (
+    <div className="absolute right-3 bottom-10 z-[1000] flex flex-col items-end gap-2">
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={onZoomIn}
+          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
+          title="Zoom in"
+          aria-label="Zoom in"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+          </svg>
+        </button>
+        <button
+          onClick={onZoomOut}
+          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
+          title="Zoom out"
+          aria-label="Zoom out"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2">
+            <path d="M5 12h14" strokeLinecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }

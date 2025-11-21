@@ -164,9 +164,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating memory:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create memory';
     return NextResponse.json(
-      { error: message },
+      { error: 'Failed to create memory' },
       { status: 500 }
     );
   }
@@ -202,7 +201,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ memories: posts });
   } catch (error) {
     console.error('Error fetching memories:', error);
-    const message = error instanceof Error ? error.message : 'Failed to fetch memories';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to load memories' }, { status: 500 });
   }
 }
