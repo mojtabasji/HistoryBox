@@ -12,7 +12,7 @@ export default function CoinsBadge({ className, rect = false }: { className?: st
   // No automatic fetches here; AuthContext handles initial load and focus refreshes.
 
   const pillClass = 'pointer-events-auto inline-flex items-center gap-1 rounded-full bg-amber-100/90 px-3 py-1 text-amber-800 shadow ring-1 ring-amber-300';
-  const rectClass = 'h-10 inline-flex items-center gap-2 px-3 rounded-md shadow border bg-white/80 text-gray-800 text-sm';
+  const rectClass = 'h-10 inline-flex items-center gap-2 px-3 rounded-md shadow-md bg-white/80 text-gray-800 text-sm';
 
   return (
     <Link

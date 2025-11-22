@@ -432,7 +432,7 @@ export default function Home() {
             {/* Grid toggle icon button */}
             <button
               onClick={() => setShowGrid((s) => !s)}
-              className={`btn-h btn-w rounded-md shadow border flex items-center justify-center transition-colors ${showGrid ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
+              className={`btn-h btn-w rounded-md shadow-md flex items-center justify-center transition-colors ${showGrid ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
               title={showGrid ? t('hideGrid') : t('showGrid')}
               aria-label={showGrid ? t('hideGrid') : t('showGrid')}
               aria-pressed={showGrid}
@@ -453,17 +453,17 @@ export default function Home() {
 
                 {user ? (
                   <>
-                    <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h" title="Dashboard" aria-label="Dashboard">
+                    <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h" title="Dashboard" aria-label="Dashboard">
                       {t('dashboard')}
                     </Link>
-                    <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm btn-h" title="Add Memory" aria-label="Add Memory">
+                    <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h" title="Add Memory" aria-label="Add Memory">
                       {t('addMemory')}
                     </Link>
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">{t('signIn')}</Link>
-                    <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm btn-h">{t('createAccount')}</Link>
+                    <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">{t('signIn')}</Link>
+                    <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h">{t('createAccount')}</Link>
                   </>
                 )}
           </div>
@@ -478,8 +478,8 @@ export default function Home() {
 
       {/* Left: Recent items list (md+) */}
       <div className="pointer-events-none absolute left-0 top-20 p-3 z-[1000] hidden md:block mx-h-6">
-        <div className="pointer-events-auto w-72 h-full bg-white/80 backdrop-blur rounded-lg shadow border overflow-hidden flex flex-col">
-          <div className="px-3 py-2 border-b text-sm font-semibold text-gray-800">{t('recentLocations')}</div>
+        <div className="pointer-events-auto w-72 h-full bg-white/80 backdrop-blur rounded-lg shadow-md overflow-hidden flex flex-col">
+          <div className="px-3 py-2 text-sm font-semibold text-gray-800">{t('recentLocations')}</div>
           <div className="flex-1 overflow-auto">
             {recentLoading && (
               <div className="p-3 text-sm text-gray-600">{t('loadingEllipsis')}</div>
@@ -602,7 +602,7 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       )}
       <button
         onClick={onClick}
-        className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center focus:outline-none hover:bg-white"
+        className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow-md flex items-center justify-center focus:outline-none hover:bg-white"
         title={t('goToMyLocation')}
         aria-label={t('goToMyLocation')}
       >
@@ -633,7 +633,7 @@ function CustomZoom({ map }: { map: LeafletMapType | null }) {
       <div className="flex flex-col gap-2">
         <button
           onClick={onZoomIn}
-          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
+          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow-md flex items-center justify-center hover:bg-white"
           title={t('zoomIn')}
           aria-label={t('zoomIn')}
         >
@@ -643,7 +643,7 @@ function CustomZoom({ map }: { map: LeafletMapType | null }) {
         </button>
         <button
           onClick={onZoomOut}
-          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
+          className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow-md flex items-center justify-center hover:bg-white"
           title={t('zoomOut')}
           aria-label={t('zoomOut')}
         >
