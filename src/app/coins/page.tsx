@@ -1,5 +1,6 @@
 "use client";
 import React from "react";
+import { t } from '@/lib/i18n';
 import { useAuth } from "@/contexts/SuperTokensAuthContext";
 import Link from "next/link";
 
@@ -70,8 +71,8 @@ export default function CoinsPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Buy Coins</h1>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">Back to Map</Link>
+        <h1 className="text-2xl font-bold">{t('buyCoins')}</h1>
+        <Link href="/" className="text-sm text-blue-600 hover:underline">{t('viewMap')}</Link>
       </div>
 
       {statusMsg && (
@@ -82,7 +83,7 @@ export default function CoinsPage() {
 
       {!loading && !user && (
         <div className="mb-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
-          Please log in to purchase coins.
+          لطفاً برای خرید سکه وارد شوید.
         </div>
       )}
 
@@ -97,29 +98,29 @@ export default function CoinsPage() {
           <div key={p.id} className={`rounded-lg border p-5 shadow-sm ${p.popular ? "ring-2 ring-amber-400" : ""}`}>
             {p.popular && (
               <div className="mb-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                Most Popular
+                محبوب‌ترین
               </div>
             )}
-            <div className="mb-1 text-lg font-semibold">{p.coins} coins</div>
-            <div className="mb-4 text-2xl font-bold">{formatUSD(p.priceCents)}</div>
+            <div className="mb-1 text-lg font-semibold rtl-num">{p.coins} سکه</div>
+            <div className="mb-4 text-2xl font-bold rtl-num">{formatUSD(p.priceCents)}</div>
             <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
-              <li>Instant access to coin features</li>
-              <li>No expiration</li>
-              <li>Support the project</li>
+              <li>دسترسی فوری به قابلیت‌ها</li>
+              <li>بدون انقضا</li>
+              <li>حمایت از پروژه</li>
             </ul>
             <button
               onClick={() => handleBuy(p)}
               disabled={!!busyId}
               className="w-full rounded bg-amber-600 px-4 py-2 font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
             >
-              {busyId === p.id ? "Starting checkout…" : "Buy now"}
+              {busyId === p.id ? <span className="rtl-num">در حال آغاز پرداخت…</span> : <span className="rtl-num">خرید</span>}
             </button>
           </div>
         ))}
       </div>
 
       <div className="mt-10 text-sm text-gray-500">
-        Note: Payments are processed securely. You will be redirected to a checkout page.
+        توجه: پرداخت‌ها به صورت امن انجام می‌شود و به صفحه پرداخت هدایت خواهید شد.
       </div>
     </div>
   );

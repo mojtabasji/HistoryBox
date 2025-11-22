@@ -23,6 +23,31 @@ body {
   font-family: var(--font-geist-sans);
 }
 
+/* Persian font utility (applied globally via layout) */
+.font-fa {
+  font-family: var(--font-fa), var(--font-geist-sans), "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "kern" 1, "liga" 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Improve heading weights & spacing for Persian script */
+html.font-fa h1, html.font-fa h2, .font-fa h1, .font-fa h2 {
+  letter-spacing: 0.4px;
+}
+html.font-fa h3, .font-fa h3 {
+  letter-spacing: 0.3px;
+}
+html.font-fa p, .font-fa p, .font-fa span, .font-fa div {
+  line-height: 1.65;
+}
+
+/* RTL direction helper for mixed Persian + numbers */
+.rtl-num {
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  text-align: right;
+}
+
 .btn-h {
   height: 40px;
 }

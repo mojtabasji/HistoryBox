@@ -11,6 +11,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import { useMap } from 'react-leaflet';
 import SearchControl from '../components/SearchControl';
 import CoinsBadge from '@/components/CoinsBadge';
+import { t } from '@/lib/i18n';
 import { Spinner } from '@/components/Loading';
 
 const LeafletMap = dynamic(() => import('react-leaflet').then(m => m.MapContainer), { ssr: false });
@@ -249,7 +250,7 @@ export default function Home() {
         <MapInstanceSetter onReady={setMapInstance} />
         {(visibleRegions.length ? visibleRegions : regions).map((r) => {
           const totalCount = clusterTotals[r.id] ?? r.postCount;
-          const caption = totalCount ? `${totalCount} photos here` : 'Hidden photos here';
+          const caption = totalCount ? `${totalCount} ${t('photosHere')}` : t('hiddenPhotosHere');
           const thumb = r.imageUrl || '/vercel.svg';
           const icon = LRef
             ? LRef.divIcon({
@@ -260,7 +261,7 @@ export default function Home() {
                       <div class="hb-img" style="width:100%;height:100%;background-size:cover;background-position:center;background-image:url('${thumb}')"></div>
                     </div>
                     <div class="hb-arrow" style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #ffffff;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));margin-top:-1px"></div>
-                    <div class="hb-caption" style="margin-top:6px;padding:2px 8px;border-radius:9999px;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);font-size:11px;line-height:1.1;color:#111;white-space:nowrap;max-width:120px;text-overflow:ellipsis;overflow:hidden;border:1px solid rgba(0,0,0,0.08)">${caption}</div>
+                    <div class="hb-caption rtl-num" style="margin-top:6px;padding:2px 8px;border-radius:9999px;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);font-size:11px;line-height:1.1;color:#111;white-space:nowrap;max-width:120px;text-overflow:ellipsis;overflow:hidden;border:1px solid rgba(0,0,0,0.08)">${caption}</div>
                   </div>
                 `,
                 iconSize: [96, 84],
@@ -333,15 +334,15 @@ export default function Home() {
                       {!isUnlocked && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <span className="text-white text-xs bg-black/40 px-2 py-0.5 rounded inline-flex items-center gap-1">
-                            {unlockRequested[r.geohash] ? (<><Spinner size="sm" /><span>Checking…</span></>) : 'Locked preview'}
+                            {unlockRequested[r.geohash] ? (<><Spinner size="sm" /><span>{t('checking')}</span></>) : t('lockedPreview')}
                           </span>
                         </div>
                       )}
                     </div>
                   )}
-                  <div className="font-semibold text-sm mb-1">{r.title || 'Memory'}</div>
+                  <div className="font-semibold text-sm mb-1">{r.title || t('memory')}</div>
                   <div className="text-xs text-gray-700">
-                    {isUnlocked ? (truncate(r.description || r.title, 5)) : (truncate(r.description || r.title, 5) + ' …locked')}
+                    {isUnlocked ? (truncate(r.description || r.title, 5)) : (truncate(r.description || r.title, 5) + ' ' + t('lockedSuffix'))}
                   </div>
                   <div className="mt-2 flex gap-2">
                             <button
@@ -377,7 +378,7 @@ export default function Home() {
                               }}
                               className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs"
                             >
-                              {isUnlocked ? 'Show' : 'Unlock'}
+                              {isUnlocked ? t('show') : t('unlock')}
                             </button>
                   </div>
                 </div>
@@ -418,7 +419,7 @@ export default function Home() {
           {/* Left: Logo + App name */}
           <div className="pointer-events-auto flex items-center gap-2 btn-h">
             <Link href="/" className="inline-flex items-center justify-center rounded-md bg-indigo-600 text-white shadow font-bold select-none btn-h btn-w">HB</Link>
-            <span className="flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide text-indigo-700 select-none btn-h">History Box</span>
+            <span className="flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide text-indigo-700 select-none btn-h font-fa">{t('historyBox')}</span>
           </div>
 
           {/* Center: Search */}
@@ -432,8 +433,8 @@ export default function Home() {
             <button
               onClick={() => setShowGrid((s) => !s)}
               className={`btn-h btn-w rounded-md shadow border flex items-center justify-center transition-colors ${showGrid ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
-              title={showGrid ? 'Hide grid' : 'Show grid'}
-              aria-label="Toggle region grid"
+              title={showGrid ? t('hideGrid') : t('showGrid')}
+              aria-label={showGrid ? t('hideGrid') : t('showGrid')}
               aria-pressed={showGrid}
             >
               {/* grid icon */}
@@ -453,16 +454,16 @@ export default function Home() {
                 {user ? (
                   <>
                     <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h" title="Dashboard" aria-label="Dashboard">
-                      Dashboard
+                      {t('dashboard')}
                     </Link>
                     <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm btn-h" title="Add Memory" aria-label="Add Memory">
-                      Add Memory
+                      {t('addMemory')}
                     </Link>
                   </>
                 ) : (
                   <>
-                    <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">Sign In</Link>
-                    <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm btn-h">Create Account</Link>
+                    <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">{t('signIn')}</Link>
+                    <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow border bg-green-600 hover:bg-green-700 text-white text-sm btn-h">{t('createAccount')}</Link>
                   </>
                 )}
           </div>
@@ -478,16 +479,16 @@ export default function Home() {
       {/* Left: Recent items list (md+) */}
       <div className="pointer-events-none absolute left-0 top-20 p-3 z-[1000] hidden md:block mx-h-6">
         <div className="pointer-events-auto w-72 h-full bg-white/80 backdrop-blur rounded-lg shadow border overflow-hidden flex flex-col">
-          <div className="px-3 py-2 border-b text-sm font-semibold text-gray-800">Recent Locations</div>
+          <div className="px-3 py-2 border-b text-sm font-semibold text-gray-800">{t('recentLocations')}</div>
           <div className="flex-1 overflow-auto">
             {recentLoading && (
-              <div className="p-3 text-sm text-gray-600">Loading…</div>
+              <div className="p-3 text-sm text-gray-600">{t('loadingEllipsis')}</div>
             )}
             {recentError && (
               <div className="p-3 text-sm text-yellow-800 bg-yellow-50">{recentError}</div>
             )}
             {!recentLoading && !recentError && recent.length === 0 && (
-              <div className="p-3 text-sm text-gray-600">No recent items yet.</div>
+              <div className="p-3 text-sm text-gray-600">{t('noRecentItems')}</div>
             )}
             {recent.map((m) => (
               <button
@@ -506,8 +507,8 @@ export default function Home() {
                 <img src={m.imageUrl} alt={m.title || 'memory'} className="h-10 w-14 object-cover rounded" />
                 <div className="min-w-0">
                   <div className="text-sm font-medium text-gray-900 line-clamp-1">{m.title || 'Memory'}</div>
-                  <div className="text-[11px] text-gray-600 line-clamp-1" suppressHydrationWarning>
-                    {new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))}
+                  <div className="text-[11px] text-gray-600 line-clamp-1 rtl-num" suppressHydrationWarning>
+                    {new Intl.DateTimeFormat('fa-IR', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))}
                   </div>
                 </div>
               </button>
@@ -527,9 +528,9 @@ export default function Home() {
           {error ? (
             <div className="text-red-700">{error}</div>
           ) : (
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-medium">Explore the World</span>
-              <span className="text-gray-600">{loading ? 'Loading regions…' : `${regions.length} regions with hidden photos`}</span>
+            <div className="flex items-center justify-between gap-2" dir='rtl'>
+              <span className="font-medium">{t('exploreWorld')}</span>
+              <span className="text-gray-600 rtl-num">{loading ? t('loadingRegions') : `${regions.length} ${t('regionsWithHiddenPhotos')}`}</span>
             </div>
           )}
         </div>
@@ -557,11 +558,11 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
   const onClick = () => {
     setErr(null);
     if (!map) {
-      setErr('Map is not ready yet');
+      setErr(t('mapNotReady'));
       return;
     }
     if (!('geolocation' in navigator)) {
-      setErr('Geolocation not supported');
+      setErr(t('geolocationUnsupported'));
       return;
     }
     setLocating(true);
@@ -586,7 +587,7 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       },
       (e) => {
         setLocating(false);
-        setErr(e.message || 'Failed to get location');
+        setErr(e.message || t('locationFailed'));
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
@@ -602,8 +603,8 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       <button
         onClick={onClick}
         className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center focus:outline-none hover:bg-white"
-        title="Go to my location"
-        aria-label="Go to my location"
+        title={t('goToMyLocation')}
+        aria-label={t('goToMyLocation')}
       >
         {locating ? (
           <Spinner size="md" />
@@ -633,8 +634,8 @@ function CustomZoom({ map }: { map: LeafletMapType | null }) {
         <button
           onClick={onZoomIn}
           className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
-          title="Zoom in"
-          aria-label="Zoom in"
+          title={t('zoomIn')}
+          aria-label={t('zoomIn')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2">
             <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
@@ -643,8 +644,8 @@ function CustomZoom({ map }: { map: LeafletMapType | null }) {
         <button
           onClick={onZoomOut}
           className="btn-h btn-w bg-white/80 text-gray-800 rounded-md shadow border flex items-center justify-center hover:bg-white"
-          title="Zoom out"
-          aria-label="Zoom out"
+          title={t('zoomOut')}
+          aria-label={t('zoomOut')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2">
             <path d="M5 12h14" strokeLinecap="round"/>

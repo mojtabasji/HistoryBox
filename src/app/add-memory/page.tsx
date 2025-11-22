@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { t } from '@/lib/i18n';
 import ImageUpload from '../../components/ImageUpload';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -33,7 +34,7 @@ export default function AddMemory() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Loading...</div>
+        <div className="text-xl">{t('loading')}</div>
       </div>
     );
   }
@@ -151,7 +152,7 @@ export default function AddMemory() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span className="text-sm font-medium text-gray-900">Saving memory…</span>
+            <span className="text-sm font-medium text-gray-900 rtl-num">Saving memory…</span>
           </div>
         </div>,
         document.body
@@ -161,22 +162,22 @@ export default function AddMemory() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold text-gray-900">History Box</h1>
+              <h1 className="text-xl font-semibold text-gray-900">{t('brand')}</h1>
               <div className="hidden md:flex space-x-4">
                 <a href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                  Dashboard
+                  داشبورد
                 </a>
                 <Link href="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                  Map View
+                  مشاهده نقشه
                 </Link>
                 <a href="/add-memory" className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
-                  Add Memory
+                  {t('addMemory')}
                 </a>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">
-                {user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}
+              <span className={"text-gray-700 " + (user?.phoneNumber ? 'rtl-num' : '')}>
+                {user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}
               </span>
             </div>
           </div>
@@ -187,9 +188,9 @@ export default function AddMemory() {
       <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Add New Memory</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">افزودن خاطره جدید</h2>
             <p className="text-gray-600">
-              Capture a special moment with photos and location details.
+              یک لحظه خاص را با عکس و جزئیات مکان ثبت کنید.
             </p>
           </div>
 
@@ -204,12 +205,12 @@ export default function AddMemory() {
             className="space-y-6"
           >
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Memory Details</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">جزئیات خاطره</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                    Title *
+                    عنوان *
                   </label>
                   <input
                     type="text"
@@ -219,13 +220,13 @@ export default function AddMemory() {
                     value={formData.title}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Give your memory a title"
+                    placeholder="یک عنوان برای خاطره وارد کنید"
                   />
                 </div>
 
                 <div>
                   <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                    Date
+                    تاریخ
                   </label>
                   <input
                     type="date"
@@ -240,7 +241,7 @@ export default function AddMemory() {
 
               <div className="mt-6">
                 <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                  توضیحات
                 </label>
                 <textarea
                   id="description"
@@ -249,14 +250,14 @@ export default function AddMemory() {
                   value={formData.description}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Describe this memory..."
+                  placeholder="این خاطره را توضیح دهید..."
                 />
               </div>
             </div>
 
             {/* Image Upload Section */}
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Photo</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">عکس</h3>
               <ImageUpload
                 onImageUpload={handleImageUpload}
                 currentImage={formData.imageUrl}
@@ -268,7 +269,7 @@ export default function AddMemory() {
 
             {/* Location Section */}
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Location</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">مکان</h3>
               <LocationPicker
                 onLocationSelect={handleLocationSelect}
                 className="w-full"
@@ -276,7 +277,7 @@ export default function AddMemory() {
               {formData.address && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-md">
                   <p className="text-sm text-gray-600">
-                    <strong>Selected Location:</strong> {formData.address}
+                    <strong>مکان انتخاب‌شده:</strong> {formData.address}
                   </p>
                 </div>
               )}
@@ -289,14 +290,14 @@ export default function AddMemory() {
                 onClick={() => router.push('/dashboard')}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Cancel
+                انصراف
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${isSubmitting ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}
               >
-                {isSubmitting ? 'Saving...' : 'Save Memory'}
+                {isSubmitting ? 'در حال ذخیره...' : 'ذخیره خاطره'}
               </button>
             </div>
           </form>

@@ -14,12 +14,12 @@ export default function ForgotPassword() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
+            بازیابی رمز عبور
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
+            یا{' '}
             <Link href="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-              back to sign in
+              بازگشت به ورود
             </Link>
           </p>
         </div>
@@ -28,7 +28,7 @@ export default function ForgotPassword() {
             onClick={goToLogin}
             className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Open Auth0 Password Reset
+            باز کردن صفحه بازیابی Auth0
           </button>
         </div>
       </div>

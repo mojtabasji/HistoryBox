@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { t } from '@/lib/i18n';
 
 type Memory = {
   id: number;
@@ -87,32 +88,32 @@ export default function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold text-gray-900">History Box</h1>
+              <h1 className="text-xl font-semibold text-gray-900 font-fa">{t('brand')}</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Link 
                 href="/coins" 
                 className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
-                Buy Coins
+                {t('buyCoins')}
               </Link>
               <Link 
                 href="/" 
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
-                View Map
+                {t('viewMap')}
               </Link>
               <Link
                 href="/add-memory"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
-                Add Memory
+                {t('addMemory')}
               </Link>
               <div className="text-right text-xs text-gray-700">
-                <div>{user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}</div>
-                <div className="text-[11px] text-gray-500">Phone: {user?.phoneNumber || '—'}</div>
+                <div className={user?.phoneNumber ? 'rtl-num' : undefined}>{user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}</div>
+                <div className={"text-[11px] text-gray-500 " + (user?.phoneNumber ? 'rtl-num' : '')}>{t('phone')}: {user?.phoneNumber || '—'}</div>
               </div>
-              <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
+              <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">{t('logout')}</button>
             </div>
           </div>
         </div>
@@ -121,13 +122,13 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Memories</h2>
+            <h2 className="text-2xl font-bold text-gray-900 font-fa">{t('yourMemories')}</h2>
             {/* removed duplicate action buttons (moved Add Memory into header) */}
           </div>
 
           {loadingMemories && (
             <div className="border rounded-lg p-6 bg-white shadow">
-              <p className="text-gray-600">Loading your memories...</p>
+              <p className="text-gray-600">{t('loadingMemories')}</p>
             </div>
           )}
 
@@ -139,7 +140,7 @@ export default function Dashboard() {
 
           {!loadingMemories && !error && memories.length === 0 && (
             <div className="border rounded-lg p-6 bg-white shadow text-center">
-              <p className="text-gray-600">No memories yet. Start by adding your first one!</p>
+              <p className="text-gray-600">{t('noMemories')}</p>
             </div>
           )}
 
@@ -158,39 +159,39 @@ export default function Dashboard() {
                   )}
                   <p className="text-sm text-gray-600 mt-2 line-clamp-2">{m.description || m.caption}</p>
                   <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
-                    <span suppressHydrationWarning>
+                    <span suppressHydrationWarning className="rtl-num">
                       {mounted
-                        ? new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))
+                        ? new Intl.DateTimeFormat('fa-IR', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))
                         : ''}
                     </span>
-                    <span>Lat: {m.latitude.toFixed(3)}, Lng: {m.longitude.toFixed(3)}</span>
+                    <span className="rtl-num">{t('lat')}: {m.latitude.toFixed(3)}, {t('lng')}: {m.longitude.toFixed(3)}</span>
                   </div>
                   <div className="mt-4 flex items-center justify-end space-x-2">
                     <Link
                       href={`/edit-memory/${m.id}`}
                       className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
                     >
-                      Edit
+                      {t('edit')}
                     </Link>
                     <button
                       onClick={async () => {
-                        if (!confirm('Delete this memory? This cannot be undone.')) return;
+                        if (!confirm(t('deleteConfirm'))) return;
                         const prev = memories;
                         setMemories((list) => list.filter((x) => x.id !== m.id));
                         try {
                           const res = await fetch(`/api/memories/${m.id}`, { method: 'DELETE' });
                           if (!res.ok) {
                             const data = await res.json().catch(() => ({}));
-                            throw new Error(data.error || 'Failed to delete');
+                            throw new Error(data.error || t('deleteFailed'));
                           }
                         } catch (e) {
-                          alert(e instanceof Error ? e.message : 'Failed to delete');
+                          alert(e instanceof Error ? e.message : t('deleteFailed'));
                           setMemories(prev);
                         }
                       }}
                       className="inline-flex items-center rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
                     >
-                      Delete
+                      {t('delete')}
                     </button>
                   </div>
                 </div>

@@ -33,8 +33,10 @@ export async function GET(req: NextRequest, ctx: { params: Promise<Params> | Par
 
     let unlockedCount = 0;
     let isUnlocked = false;
-    if (authUser?.email) {
-      const dbUser = await prisma.user.findUnique({ where: { email: authUser.email } });
+    if (authUser?.id) {
+      // Our auth /api/auth/me returns SuperTokens user id in `id`.
+      // We persist that as `username` in our User table.
+      const dbUser = await prisma.user.findUnique({ where: { username: authUser.id as string } });
       if (dbUser) {
         const unlock = await prisma.userRegionUnlock.findUnique({ where: { userId_regionId: { userId: dbUser.id, regionId: region.id } } });
         if (unlock) {

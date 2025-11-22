@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { t } from '@/lib/i18n';
 import Loading, { Spinner } from '@/components/Loading';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
@@ -26,7 +27,7 @@ export default function RegionPage() {
   const params = useParams<{ hash: string }>();
   const regionHash = params?.hash;
   const router = useRouter();
-  const { user, setCoins: setGlobalCoins } = useAuth();
+  const { user, setCoins: setGlobalCoins, coins: globalCoins } = useAuth();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +47,10 @@ export default function RegionPage() {
     try {
       const res = await fetch(`/api/regions/${regionHash}/posts`, { cache: 'no-store' });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Failed to load region');
+      if (!res.ok) throw new Error(json.error || t('loadingRegion'));
       setData(json as ApiResponse);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load region');
+      setError(e instanceof Error ? e.message : t('loadingRegion'));
     } finally {
       setLoading(false);
     }
@@ -167,28 +168,38 @@ export default function RegionPage() {
       <nav className="bg-white shadow">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-gray-700 hover:text-gray-900 text-sm">← Back to map</Link>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-xs md:text-sm shadow focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span>{t('backToMap')}</span>
+            </Link>
             {data && (
-              <div className="text-gray-900 font-semibold">Region {data.region.hash}</div>
+              <div className="text-gray-900 font-semibold rtl-num">{t('region')} {data.region.hash}</div>
             )}
           </div>
-          {coins !== null && (
-            <div className="text-sm text-gray-700">Your coins: <span className="font-semibold">{coins}</span></div>
+          {(coins !== null || globalCoins !== null) && (
+            <div className="text-sm text-gray-700 rtl-num bg-white/70 backdrop-blur px-3 py-1 rounded-md shadow-sm border border-gray-200">
+              {t('yourCoins')}: <span className="font-semibold" dir="rtl">{(coins ?? globalCoins) ?? 0}</span>
+            </div>
           )}
         </div>
       </nav>
 
   <main className="relative max-w-6xl mx-auto px-4 py-6">
-  {loading && <Loading label="Loading region…" variant="inset" />}
+  {loading && <Loading label={t('loadingRegion')} variant="inset" />}
         {error && <div className="text-red-700">{error}</div>}
         {data && (
           <>
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-sm text-gray-700">{data.region.postCount} total posts</div>
+              <div className="text-sm text-gray-700 rtl-num">{data.region.postCount} {t('totalPostsSuffix')}</div>
               {!data.unlocked && (
                 <button onClick={onUnlock} disabled={unlocking} className={`px-3 py-2 rounded text-white text-sm inline-flex items-center gap-2 ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
                   {unlocking && <Spinner size="sm" />}
-                  <span>🔒 Unlock region (2 coins)</span>
+                  <span>🔒 {t('unlockRegion')}</span>
                 </button>
               )}
             </div>
@@ -215,12 +226,12 @@ export default function RegionPage() {
                       <img src={p.imageUrl} alt="memory" className={`w-full h-full object-cover ${p.blurred ? 'blur-md select-none' : ''}`} />
                       {p.blurred && (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                          <div className="bg-white/90 backdrop-blur px-3 py-1 rounded text-sm">Locked preview</div>
+                          <div className="bg-white/90 backdrop-blur px-3 py-1 rounded text-sm">{t('lockedPreview')}</div>
                         </div>
                       )}
                     </div>
                     <div className="p-3 text-sm text-gray-800">
-                      <div className="font-medium mb-1">{p.caption || 'Memory'}</div>
+                      <div className="font-medium mb-1">{p.caption || t('memory')}</div>
                       {p.description && <div className="text-xs text-gray-600 line-clamp-2">{p.description}</div>}
                     </div>
                   </button>
@@ -232,14 +243,14 @@ export default function RegionPage() {
               {needsMore && (
                 <button onClick={onUnlock} disabled={unlocking || !user} className={`px-4 py-2 rounded text-white text-sm inline-flex items-center gap-2 ${unlocking ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
                   {unlocking && <Spinner size="sm" />}
-                  <span>{user ? 'Unlock more posts (2 coins)' : 'Sign in to unlock'}</span>
+                  <span>{user ? t('unlockMorePosts') : t('signInToUnlock')}</span>
                 </button>
               )}
             </div>
           </>
         )}
         {(unlocking || checkingUnlock) && (
-          <div className="absolute inset-0"><Loading variant="cover" label={unlocking ? 'Unlocking…' : 'Checking status…'} /></div>
+          <div className="absolute inset-0"><Loading variant="cover" label={unlocking ? t('unlocking') : t('checkingStatus')} /></div>
         )}
       </main>
 
@@ -251,9 +262,9 @@ export default function RegionPage() {
             <button
               onClick={() => setViewerPost(null)}
               className="absolute top-4 right-4 bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-1 text-sm"
-              aria-label="Close"
+              aria-label={t('close')}
             >
-              Close ✕
+              {t('close')}
             </button>
 
             <div className="flex flex-col items-center h-full">
@@ -300,40 +311,40 @@ export default function RegionPage() {
               </div>
 
               <div className="mt-3 w-full max-w-[96vw] text-white">
-                <div className="text-lg font-semibold">{viewerPost.caption || 'Memory'}</div>
+                <div className="text-lg font-semibold">{viewerPost.caption || t('memory')}</div>
                 {viewerPost.description && (
                   <div className="mt-1 text-sm text-white/90 whitespace-pre-line">{viewerPost.description}</div>
                 )}
               </div>
 
-              {/* Zoom controls */}
-              <div className="absolute bottom-4 right-4 flex gap-2">
+              {/* Zoom controls moved to left side to avoid overlap */}
+              <div className="absolute bottom-4 left-4 flex gap-2">
                 <button
                   onClick={() => setZoom((z) => Math.max(1, z - 0.5))}
                   className="bg-white/20 hover:bg-white/30 text-white rounded-full h-9 w-9 flex items-center justify-center text-lg"
-                  aria-label="Zoom out"
+                  aria-label={t('zoomOut')}
                 >−</button>
                 <button
                   onClick={() => setZoom((z) => Math.min(6, z + 0.5))}
                   className="bg-white/20 hover:bg-white/30 text-white rounded-full h-9 w-9 flex items-center justify-center text-lg"
-                  aria-label="Zoom in"
+                  aria-label={t('zoomIn')}
                 >+</button>
                 <button
                   onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}
                   className="bg-white/20 hover:bg-white/30 text-white rounded-full px-3 h-9 flex items-center justify-center text-sm"
-                  aria-label="Reset zoom"
-                >Reset</button>
+                  aria-label={t('resetZoom')}
+                >{t('resetZoom')}</button>
               </div>
 
               {/* Timeline slider (center bottom) */}
               {timeline.items.length > 1 && (
-                <div className="absolute left-1/2 -translate-x-1/2 bottom-4 pr-36 pl-4">
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-4 pl-36 pr-4">
                   <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 text-white shadow border border-white/10 w-[min(92vw,720px)]">
                     <div className="flex items-center justify-between text-xs mb-2 opacity-90">
-                      <div>Timeline</div>
+                      <div>{t('timeline')}</div>
                       <div>
                         {timeline.hasDates
-                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString() : '—')
+                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString('fa-IR') : '—')
                           : `${Math.max(1, currentIndex + 1)} / ${timeline.items.length}`}
                       </div>
                     </div>
@@ -341,8 +352,8 @@ export default function RegionPage() {
                       <button
                         className="bg-white/20 hover:bg-white/30 text-white rounded px-2 py-1 text-xs"
                         onClick={() => jumpToIndex((currentIndex === -1 ? timeline.items.length - 1 : currentIndex) - 1)}
-                        aria-label="Previous"
-                      >Prev</button>
+                        aria-label={t('prev')}
+                      >{t('prev')}</button>
                       <input
                         type="range"
                         className="flex-1 accent-indigo-400"
@@ -356,20 +367,20 @@ export default function RegionPage() {
                       <button
                         className="bg-white/20 hover:bg-white/30 text-white rounded px-2 py-1 text-xs"
                         onClick={() => jumpToIndex((currentIndex === -1 ? 0 : currentIndex) + 1)}
-                        aria-label="Next"
-                      >Next</button>
+                        aria-label={t('next')}
+                      >{t('next')}</button>
                     </div>
                     <div className="mt-2 grid grid-cols-3 text-[11px] text-white/90">
                       <div className="justify-self-start">
-                        {timeline.hasDates ? new Date(timeline.items[0].t).toLocaleDateString() : '1'}
+                        {timeline.hasDates ? new Date(timeline.items[0].t).toLocaleDateString('fa-IR') : '1'}
                       </div>
                       <div className="justify-self-center">
                         {timeline.hasDates
-                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString() : '—')
+                          ? (currentIndex >= 0 ? new Date(timeline.items[currentIndex].t).toLocaleDateString('fa-IR') : '—')
                           : `${Math.max(1, currentIndex + 1)}`}
                       </div>
                       <div className="justify-self-end">
-                        {timeline.hasDates ? new Date(timeline.items[timeline.items.length - 1].t).toLocaleDateString() : String(timeline.items.length)}
+                        {timeline.hasDates ? new Date(timeline.items[timeline.items.length - 1].t).toLocaleDateString('fa-IR') : String(timeline.items.length)}
                       </div>
                     </div>
                   </div>
