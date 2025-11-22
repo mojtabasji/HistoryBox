@@ -18,6 +18,7 @@ interface AuthContextType {
   user: { id: string; phoneNumber?: string } | null;
   loading: boolean;
   coins: number | null;
+  phoneNumber?: string;
   refreshCoins: () => Promise<void>;
   setCoins: (value: number | null) => void;
   logout: () => Promise<void>;
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   coins: null,
+  phoneNumber: undefined,
   refreshCoins: async () => {},
   setCoins: () => {},
   logout: async () => {},
@@ -71,6 +73,27 @@ const SuperTokensAuthProviderInner: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [session]);
 
+  // Hydrate missing phone number from /api/auth/me if not present in token payload
+  useEffect(() => {
+    const maybeHydratePhone = async () => {
+      if (session.loading) return;
+      if (!session.doesSessionExist) return;
+      if (user && user.phoneNumber) return; // already have
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const apiPhone = data?.user?.phoneNumber;
+        if (typeof apiPhone === 'string' && apiPhone.length > 0) {
+          setUser((prev) => prev ? { ...prev, phoneNumber: apiPhone } : prev);
+        }
+      } catch {
+        // silent
+      }
+    };
+    void maybeHydratePhone();
+  }, [session, user]);
+
   const fetchCoins = useCallback(async () => {
     if (session.loading || !session.doesSessionExist) {
       setCoins(null);
@@ -104,7 +127,7 @@ const SuperTokensAuthProviderInner: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const value = useMemo(
-    () => ({ user, loading, coins, refreshCoins: fetchCoins, setCoins, logout }),
+    () => ({ user, loading, coins, phoneNumber: user?.phoneNumber, refreshCoins: fetchCoins, setCoins, logout }),
     [user, loading, coins, fetchCoins]
   );
 

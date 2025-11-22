@@ -110,7 +110,7 @@ export default function Dashboard() {
               </Link>
               <div className="text-right text-xs text-gray-700">
                 <div>{user?.phoneNumber ? `Welcome, ${user.phoneNumber}` : 'Welcome'}</div>
-                <div className="text-[11px] text-gray-500">UserId: {user?.id}</div>
+                <div className="text-[11px] text-gray-500">Phone: {user?.phoneNumber || '—'}</div>
               </div>
               <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">Logout</button>
             </div>
