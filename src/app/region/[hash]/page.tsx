@@ -182,7 +182,7 @@ export default function RegionPage() {
             )}
           </div>
           {(coins !== null || globalCoins !== null) && (
-            <div className="text-sm text-gray-700 rtl-num bg-white/70 backdrop-blur px-3 py-1 rounded-md shadow-sm border border-gray-200">
+            <div className="text-sm text-gray-700 rtl-num bg-white/70 backdrop-blur px-3 py-1 rounded-md shadow-md">
               {t('yourCoins')}: <span className="font-semibold" dir="rtl">{(coins ?? globalCoins) ?? 0}</span>
             </div>
           )}
@@ -339,7 +339,7 @@ export default function RegionPage() {
               {/* Timeline slider (center bottom) */}
               {timeline.items.length > 1 && (
                 <div className="absolute left-1/2 -translate-x-1/2 bottom-4 pl-36 pr-4">
-                  <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 text-white shadow border border-white/10 w-[min(92vw,720px)]">
+                  <div className="bg-white/10 backdrop-blur-md rounded-lg px-3 py-2 text-white shadow-md w-[min(92vw,720px)]">
                     <div className="flex items-center justify-between text-xs mb-2 opacity-90">
                       <div>{t('timeline')}</div>
                       <div>

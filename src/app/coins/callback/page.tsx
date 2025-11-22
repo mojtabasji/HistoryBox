@@ -54,15 +54,15 @@ export default function CoinsCallbackPage() {
     <div className="mx-auto max-w-xl px-4 py-10">
       <h1 className="mb-4 text-2xl font-bold">تأیید پرداخت</h1>
       {state === 'verifying' && (
-        <div className="rounded border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800">در حال بررسی پرداخت…</div>
+        <div className="rounded bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">در حال بررسی پرداخت…</div>
       )}
       {state === 'error' && (
-        <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-800">{error}</div>
+        <div className="rounded bg-red-50 px-4 py-3 text-red-800 shadow-sm">{error}</div>
       )}
       {state === 'done' && (
         <div className="space-y-4">
           {result?.status === 'success' ? (
-            <div className="rounded border border-green-200 bg-green-50 px-4 py-3 text-green-800">
+            <div className="rounded bg-green-50 px-4 py-3 text-green-800 shadow-sm">
               پرداخت با موفقیت تأیید شد.
               {result?.credited ? (
                 <>
@@ -76,7 +76,7 @@ export default function CoinsCallbackPage() {
               )}
             </div>
           ) : (
-            <div className="rounded border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+            <div className="rounded bg-amber-50 px-4 py-3 text-amber-800 shadow-sm">
               پرداخت موفق نبود. در صورت کسر وجه لطفاً با پشتیبانی تماس بگیرید.
             </div>
           )}

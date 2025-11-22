@@ -127,26 +127,26 @@ export default function Dashboard() {
           </div>
 
           {loadingMemories && (
-            <div className="border rounded-lg p-6 bg-white shadow">
+            <div className="rounded-lg p-6 bg-white shadow-md">
               <p className="text-gray-600">{t('loadingMemories')}</p>
             </div>
           )}
 
           {error && (
-            <div className="border rounded-lg p-4 bg-yellow-50 text-yellow-800">
+            <div className="rounded-lg p-4 bg-yellow-50 text-yellow-800 shadow-sm">
               {error}
             </div>
           )}
 
           {!loadingMemories && !error && memories.length === 0 && (
-            <div className="border rounded-lg p-6 bg-white shadow text-center">
+            <div className="rounded-lg p-6 bg-white shadow-md text-center">
               <p className="text-gray-600">{t('noMemories')}</p>
             </div>
           )}
 
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {memories.map((m) => (
-              <div key={m.id} className="bg-white rounded-lg shadow overflow-hidden border">
+              <div key={m.id} className="bg-white rounded-lg shadow-md overflow-hidden">
                 {m.imageUrl && (
                   <div className="relative w-full h-48">
                     <Image src={m.imageUrl} alt={m.title || 'Memory'} fill className="object-cover" />
@@ -169,7 +169,7 @@ export default function Dashboard() {
                   <div className="mt-4 flex items-center justify-end space-x-2">
                     <Link
                       href={`/edit-memory/${m.id}`}
-                      className="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                      className="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-200 shadow-sm transition"
                     >
                       {t('edit')}
                     </Link>

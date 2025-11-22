@@ -83,26 +83,26 @@ export default function CoinsPage() {
       </div>
 
       {statusMsg && (
-        <div className="mb-6 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800">
+        <div className="mb-6 rounded bg-blue-50 px-4 py-3 text-blue-800 shadow-sm">
           {statusMsg}
         </div>
       )}
 
       {!loading && !user && (
-        <div className="mb-6 rounded border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+        <div className="mb-6 rounded bg-amber-50 px-4 py-3 text-amber-800 shadow-sm">
           لطفاً برای خرید سکه وارد شوید.
         </div>
       )}
 
       {error && (
-        <div className="mb-6 rounded border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+        <div className="mb-6 rounded bg-red-50 px-4 py-3 text-red-800 shadow-sm">
           {error}
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {PLANS.map((p) => (
-          <div key={p.id} className={`rounded-lg border p-5 shadow-sm ${p.popular ? "ring-2 ring-amber-400" : ""}`}>
+          <div key={p.id} className={`rounded-lg p-5 shadow-md bg-white ${p.popular ? "ring-2 ring-amber-400" : ""}`}>
             {p.popular && (
               <div className="mb-2 inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
                 محبوب‌ترین
