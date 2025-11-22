@@ -44,7 +44,7 @@ html.font-fa p, .font-fa p, .font-fa span, .font-fa div {
 /* RTL direction helper for mixed Persian + numbers */
 .rtl-num {
   direction: rtl;
-  unicode-bidi: bidi-override;
+  /* unicode-bidi: bidi-override; */
   text-align: right;
 }
 

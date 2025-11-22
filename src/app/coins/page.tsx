@@ -7,26 +7,25 @@ import Link from "next/link";
 type Plan = {
   id: string;
   coins: number;
-  priceCents: number; // USD cents
+  price: number; // Stored as IRR (رﺍﻳﻞ ایران)
   popular?: boolean;
 };
 
 const PLANS: Plan[] = [
-  { id: "starter", coins: 10, priceCents: 199 },
-  { id: "lite", coins: 50, priceCents: 799, popular: true },
-  { id: "standard", coins: 120, priceCents: 1499 },
-  { id: "pro", coins: 300, priceCents: 3499 },
-  { id: "mega", coins: 700, priceCents: 6999 },
+  { id: "starter", coins: 20, price: 150000 },
+  { id: "lite", coins: 50, price: 500000, popular: true },
+  { id: "standard", coins: 120, price: 900000 },
+  { id: "pro", coins: 300, price: 2300000 },
+  { id: "mega", coins: 700, price: 5000000 },
 ];
 
-function formatUSD(cents: number) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }).format(
-    cents / 100
-  );
+function formatIRR(amount: number) {
+  // Amount assumed already in IRR. Format with Persian locale & currency code IRR
+  return new Intl.NumberFormat('fa-IR', { style: 'currency', currency: 'IRR', maximumFractionDigits: 0 }).format(amount);
 }
 
 export default function CoinsPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, coins } = useAuth();
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -63,16 +62,24 @@ export default function CoinsPage() {
 
   const qp = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
   const statusMsg = qp?.get("status") === "success"
-    ? "Payment initiated. You'll receive your coins once payment is confirmed."
+    ? "پرداخت آغاز شد. پس از تایید سکه‌ها اضافه می‌شوند."
     : qp?.get("status") === "canceled"
-    ? "Checkout was canceled."
+    ? "فرایند پرداخت لغو شد."
     : null;
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('buyCoins')}</h1>
-        <Link href="/" className="text-sm text-blue-600 hover:underline">{t('viewMap')}</Link>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-bold flex items-center gap-3" dir="rtl">
+            {t('buyCoins')}
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-amber-800 text-sm font-semibold rtl-num" title={`سکه‌های فعلی: ${coins ?? 0}`}>{t('yourCoins') + ":"} {coins ?? 0}</span>
+          </h1>
+          <p className="text-sm text-gray-600">با خرید بسته‌های زیر، موجودی خود را افزایش دهید.</p>
+        </div>
+        <Link href="/" className="inline-flex items-center rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-medium shadow">
+          ← {t('backToMap')}
+        </Link>
       </div>
 
       {statusMsg && (
@@ -102,7 +109,7 @@ export default function CoinsPage() {
               </div>
             )}
             <div className="mb-1 text-lg font-semibold rtl-num">{p.coins} سکه</div>
-            <div className="mb-4 text-2xl font-bold rtl-num">{formatUSD(p.priceCents)}</div>
+            <div className="mb-4 text-2xl font-bold rtl-num">{formatIRR(p.price)}</div>
             <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
               <li>دسترسی فوری به قابلیت‌ها</li>
               <li>بدون انقضا</li>
