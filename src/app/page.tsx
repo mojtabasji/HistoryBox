@@ -71,6 +71,9 @@ export default function Home() {
   const [recent, setRecent] = useState<RecentMemory[]>([]);
   const [recentLoading, setRecentLoading] = useState(false);
   const [recentError, setRecentError] = useState<string | null>(null);
+  // Mobile UI states
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -421,21 +424,17 @@ export default function Home() {
 
       {/* Top overlay header */}
       <div className="pointer-events-none absolute top-0 left-0 right-0 p-3 z-[1000]">
-        <div className="grid grid-cols-3 items-center gap-3">
-          {/* Left: Logo + App name */}
+        {/* Desktop layout */}
+        <div className="hidden md:grid grid-cols-3 items-center gap-3">
           <div className="pointer-events-auto flex items-center gap-2 btn-h">
             <Link href="/" className="inline-flex items-center justify-center rounded-md bg-indigo-600 text-white shadow font-bold select-none btn-h btn-w">HB</Link>
             <span className="flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide hb-brand select-none btn-h font-fa">{t('historyBox')}</span>
           </div>
-
-          {/* Center: Search */}
-          <div className="pointer-events-auto justify-self-center hidden md:block">
+          <div className="pointer-events-auto justify-self-center">
             <SearchControl map={mapInstance} className="w-[min(92vw,420px)] btn-h" />
           </div>
-
-          {/* Right: Square icon buttons */}
           <div className="pointer-events-auto justify-self-end flex items-center gap-2 z-[1001]">
-            {/* Grid toggle icon button */}
+            {/* Grid toggle */}
             <button
               onClick={() => setShowGrid((s) => !s)}
               className={`btn-h btn-w rounded-md shadow-md flex items-center justify-center transition-colors ${showGrid ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
@@ -443,21 +442,14 @@ export default function Home() {
               aria-label={showGrid ? t('hideGrid') : t('showGrid')}
               aria-pressed={showGrid}
             >
-              {/* grid icon */}
               {showGrid ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-                  <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-gray-700">
-                  <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7 text-gray-700"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/></svg>
               )}
-              {/* active dot indicator */}
               {showGrid && <span className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full" aria-hidden="true" />}
             </button>
-
-            {/* HOT layer toggle */}
+            {/* Layer toggle */}
             <button
               onClick={() => setUseHotLayer((v) => !v)}
               className={`btn-h btn-w rounded-md shadow-md flex items-center justify-center transition-colors ${useHotLayer ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
@@ -466,39 +458,92 @@ export default function Home() {
               aria-pressed={useHotLayer}
             >
               {useHotLayer ? (
-                /* Active: layered stack with highlight */
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
-                  <path d="M3 12l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 8l9 6 9-6-9-6-9 6z" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 16l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7"><path d="M3 12l9 6 9-6"/><path d="M3 8l9 6 9-6-9-6-9 6z"/><path d="M3 16l9 6 9-6" opacity="0.4"/></svg>
               ) : (
-                /* Inactive: two stacked layers */
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-gray-700">
-                  <path d="M3 8l9 6 9-6-9-6-9 6z" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M3 12l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-gray-700"><path d="M3 8l9 6 9-6-9-6-9 6z"/><path d="M3 12l9 6 9-6"/></svg>
               )}
               {useHotLayer && <span className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full" aria-hidden="true" />}
             </button>
-
-                {user ? (
-                  <>
-                    <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h" title="Dashboard" aria-label="Dashboard">
-                      {t('dashboard')}
-                    </Link>
-                    <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h" title="Add Memory" aria-label="Add Memory">
-                      {t('addMemory')}
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">{t('signIn')}</Link>
-                    <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h">{t('createAccount')}</Link>
-                  </>
-                )}
+            {user ? (
+              <>
+                <Link href="/dashboard" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h" title="Dashboard" aria-label="Dashboard">{t('dashboard')}</Link>
+                <Link href="/add-memory" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h" title="Add Memory" aria-label="Add Memory">{t('addMemory')}</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm btn-h">{t('signIn')}</Link>
+                <Link href="/signup" className="h-10 inline-flex items-center px-3 rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm btn-h">{t('createAccount')}</Link>
+              </>
+            )}
           </div>
         </div>
+        {/* Mobile layout */}
+        <div className="md:hidden flex items-center justify-between gap-2 pointer-events-auto">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="inline-flex items-center justify-center rounded-md bg-indigo-600 text-white shadow font-bold select-none h-10 w-10">HB</Link>
+            <span className="leading-none text-xl font-bold tracking-wide hb-brand select-none font-fa">{t('historyBox')}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Search icon */}
+            <button
+              onClick={() => { setShowMobileSearch(s => !s); if (!showMobileSearch) setShowMobileMenu(false); }}
+              className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center transition-colors ${showMobileSearch ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
+              aria-label="Toggle search"
+              aria-pressed={showMobileSearch}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><circle cx="11" cy="11" r="7"/><path d="M17 17l4 4" strokeLinecap="round"/></svg>
+            </button>
+            {/* Menu icon */}
+            <button
+              onClick={() => { setShowMobileMenu(m => !m); if (!showMobileMenu) setShowMobileSearch(false); }}
+              className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center transition-colors ${showMobileMenu ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
+              aria-label="Toggle menu"
+              aria-pressed={showMobileMenu}
+            >
+              {showMobileMenu ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+              )}
+            </button>
+          </div>
+        </div>
+        {/* Mobile search panel */}
+        {showMobileSearch && (
+          <div className="md:hidden mt-16 pointer-events-auto bg-white/90 backdrop-blur rounded-lg shadow p-2">
+            <SearchControl map={mapInstance} className="w-full" />
+          </div>
+        )}
+        {/* Mobile dropdown menu panel */}
+        {showMobileMenu && (
+          <div className="md:hidden mt-16 pointer-events-auto bg-white/95 backdrop-blur rounded-lg shadow p-3 flex flex-col gap-2 w-[min(92vw,380px)]">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowGrid(s => !s)}
+                className={`flex-1 h-10 rounded-md shadow-md flex items-center justify-center text-sm font-medium transition-colors ${showGrid ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                aria-pressed={showGrid}
+              >{showGrid ? t('hideGrid') : t('showGrid')}</button>
+              <button
+                onClick={() => setUseHotLayer(v => !v)}
+                className={`flex-1 h-10 rounded-md shadow-md flex items-center justify-center text-sm font-medium transition-colors ${useHotLayer ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                aria-pressed={useHotLayer}
+              >{useHotLayer ? 'HOT' : 'OSM'}</button>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {user ? (
+                <>
+                  <Link href="/dashboard" className="flex-1 h-10 inline-flex items-center justify-center rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm">{t('dashboard')}</Link>
+                  <Link href="/add-memory" className="flex-1 h-10 inline-flex items-center justify-center rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm">{t('addMemory')}</Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="flex-1 h-10 inline-flex items-center justify-center rounded-md shadow-md bg-indigo-600 hover:bg-indigo-700 text-white text-sm">{t('signIn')}</Link>
+                  <Link href="/signup" className="flex-1 h-10 inline-flex items-center justify-center rounded-md shadow-md bg-green-600 hover:bg-green-700 text-white text-sm">{t('createAccount')}</Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
   {/* Locate me button */}
@@ -565,10 +610,7 @@ export default function Home() {
             </div>
           )}
         </div>
-        {/* Mobile search below */}
-        <div className="mt-2 md:hidden">
-          <SearchControl map={mapInstance} />
-        </div>
+        {/* Removed bottom mobile search (moved to top) */}
       </div>
     </div>
   );
@@ -625,7 +667,7 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
   };
 
   return (
-    <div className="absolute right-3 bottom-35 z-[1000] flex flex-col items-end gap-2">
+    <div className="absolute right-3 bottom-45 md:bottom-45 z-[1000] flex flex-col items-end gap-2">
       {err && (
         <div className="bg-white/90 backdrop-blur text-red-700 text-xs rounded px-2 py-1 shadow max-w-[70vw]">
           {err}
@@ -660,7 +702,7 @@ function CustomZoom({ map }: { map: LeafletMapType | null }) {
     try { map?.zoomOut(); } catch {}
   };
   return (
-    <div className="absolute right-3 bottom-10 z-[1000] flex flex-col items-end gap-2">
+    <div className="absolute right-3 bottom-20 md:bottom-10 z-[1000] flex flex-col items-end gap-2">
       <div className="flex flex-col gap-2">
         <button
           onClick={onZoomIn}
