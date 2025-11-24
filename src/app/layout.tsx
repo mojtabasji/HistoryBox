@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fa" dir="rtl" className={rubik.variable}>
-      <body className="antialiased font-fa">
+      <body className="antialiased font-fa bg-[var(--hb-bg)] text-[var(--hb-text-dark)]">
         <SuperTokensAuthProvider>
           {/* Global UI overlays (moved to homepage) */}
           {children}

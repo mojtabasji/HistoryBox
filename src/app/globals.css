@@ -6,6 +6,15 @@
   --foreground: #171717;
   --font-geist-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
   --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* App palette */
+  --hb-primary: #4D908E;
+  --hb-primary-hover: #417a78;
+  --hb-bg: #F2F6F7;
+  --hb-surface: #FFFFFF;
+  --hb-accent: #F9C74F;
+  --hb-accent-hover: #e0b541;
+  --hb-accent-coin: #feb300;
+  --hb-text-dark: #1f2d2d;
 }
 
 /* Theme variables are available via CSS custom properties above */
@@ -18,7 +27,7 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--hb-bg);
   color: var(--foreground);
   font-family: var(--font-geist-sans);
 }
@@ -68,3 +77,42 @@ html.font-fa p, .font-fa p, .font-fa span, .font-fa div {
 .mx-h-6 {
   max-height: 600px;
 }
+
+/* Button utilities using palette */
+.hb-btn-primary {
+  @apply inline-flex items-center justify-center rounded-md font-medium text-white shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#4D908E]/40;
+  background-color: var(--hb-primary);
+}
+.hb-btn-primary:hover { background-color: var(--hb-primary-hover); }
+
+.hb-btn-accent {
+  @apply inline-flex items-center justify-center rounded-md font-semibold shadow-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#F9C74F]/50;
+  background-color: var(--hb-accent);
+  color: #3a2f00;
+}
+.hb-btn-accent:hover { background-color: var(--hb-accent-hover); }
+
+.hb-badge-accent {
+  background: var(--hb-accent);
+  color: #3a2f00;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Brand text utility */
+.hb-brand {
+  color: var(--hb-primary-hover);
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+
+/* Surface helper */
+.hb-surface { background: var(--hb-surface); }
+
+/* Override some existing indigo/green utility usages without editing all components */
+.bg-indigo-600 { background-color: var(--hb-primary) !important; }
+.hover\:bg-indigo-700:hover { background-color: var(--hb-primary-hover) !important; }
+.bg-green-600 { background-color: var(--hb-primary) !important; }
+.hover\:bg-green-700:hover { background-color: var(--hb-primary-hover) !important; }
+.bg-amber-600 { background-color: var(--hb-accent) !important; color:#3a2f00 !important; }
+.hover\:bg-amber-700:hover { background-color: var(--hb-accent-hover) !important; }

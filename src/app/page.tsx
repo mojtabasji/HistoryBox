@@ -251,7 +251,7 @@ export default function Home() {
         {(visibleRegions.length ? visibleRegions : regions).map((r) => {
           const totalCount = clusterTotals[r.id] ?? r.postCount;
           const captionHtml = totalCount
-            ? `<div class="hb-caption rtl-num" style="margin-top:6px;padding:4px 10px;border-radius:16px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);font-size:11.5px;line-height:1.25;color:#111;white-space:nowrap;max-width:150px;text-overflow:ellipsis;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.35);font-weight:600;border:1px solid rgba(255,255,255,0.6)"><span style="background:#4f46e5;color:#fff;font-weight:700;padding:0 6px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.25);display:inline-block;text-align:center">${totalCount}</span> <span>${t('photosHere')}</span></div>`
+            ? `<div class="hb-caption rtl-num" style="margin-top:6px;padding:4px 10px;border-radius:16px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);font-size:11.5px;line-height:1.25;color:#111;white-space:nowrap;max-width:150px;text-overflow:ellipsis;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.35);font-weight:600;border:1px solid rgba(255,255,255,0.6)"><span style="background:var(--hb-primary);color:#fff;font-weight:700;padding:0 6px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.25);display:inline-block;text-align:center">${totalCount}</span> <span>${t('photosHere')}</span></div>`
             : `<div class="hb-caption rtl-num" style="margin-top:6px;padding:4px 10px;border-radius:16px;background:linear-gradient(135deg,#1e293b,#334155);font-size:11.5px;line-height:1.25;color:#fff;white-space:nowrap;max-width:150px;text-overflow:ellipsis;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.45);font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px">🔒 ${t('hiddenPhotosHere')}</span></div>`;
           const thumb = r.imageUrl || '/vercel.svg';
           const icon = LRef
@@ -417,7 +417,7 @@ export default function Home() {
           {/* Left: Logo + App name */}
           <div className="pointer-events-auto flex items-center gap-2 btn-h">
             <Link href="/" className="inline-flex items-center justify-center rounded-md bg-indigo-600 text-white shadow font-bold select-none btn-h btn-w">HB</Link>
-            <span className="flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide text-indigo-700 select-none btn-h font-fa">{t('historyBox')}</span>
+            <span className="flex items-center leading-none text-xl md:text-2xl font-bold tracking-wide hb-brand select-none btn-h font-fa">{t('historyBox')}</span>
           </div>
 
           {/* Center: Search */}

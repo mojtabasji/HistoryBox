@@ -118,7 +118,7 @@ export default function CoinsPage() {
             <button
               onClick={() => handleBuy(p)}
               disabled={!!busyId}
-              className="w-full rounded bg-amber-600 px-4 py-2 font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+              className="w-full hb-btn-primary px-4 py-2 font-semibold text-white disabled:opacity-60"
             >
               {busyId === p.id ? <span className="rtl-num">در حال آغاز پرداخت…</span> : <span className="rtl-num">خرید</span>}
             </button>
