@@ -25,6 +25,8 @@ export default function AddMemory() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,6 +52,35 @@ export default function AddMemory() {
 
   const handleLocationSelect = (loc: { lat: number; lng: number; address?: string }) => {
     setFormData(prev => ({ ...prev, latitude: loc.lat, longitude: loc.lng, address: loc.address ?? prev.address }));
+    if (!currentLocation || currentLocation.lat !== loc.lat || currentLocation.lng !== loc.lng) {
+      setCurrentLocation({ lat: loc.lat, lng: loc.lng });
+    }
+  };
+
+  const handleLocateMe = async () => {
+    if (!('geolocation' in navigator)) {
+      alert('مرورگر شما از موقعیت‌یاب پشتیبانی نمی‌کند');
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      let address: string | undefined;
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`, { headers: { 'User-Agent': 'history_box/1.0' } });
+        if (res.ok) {
+          const data = await res.json();
+          address = data.display_name;
+        }
+      } catch {/* ignore */}
+      setCurrentLocation({ lat: latitude, lng: longitude });
+      setFormData(prev => ({ ...prev, latitude, longitude, address: address ?? prev.address }));
+      setLocating(false);
+    }, (err) => {
+      console.error(err);
+      alert('دریافت موقعیت ناموفق بود');
+      setLocating(false);
+    }, { enableHighAccuracy: true, timeout: 10000 });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -259,8 +290,28 @@ export default function AddMemory() {
             {/* Location Section */}
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">مکان</h3>
+              <div className="mb-4 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={handleLocateMe}
+                  disabled={locating}
+                  className={`hb-btn-primary px-4 py-2 text-sm rounded-md inline-flex items-center gap-2 ${locating ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {locating && (
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                      <path d="M4 12a8 8 0 018-8" strokeOpacity="0.75" />
+                    </svg>
+                  )}
+                  <span>مکان فعلی من</span>
+                </button>
+                {formData.address && (
+                  <span className="px-3 py-2 bg-gray-100 rounded text-xs text-gray-700 max-w-full truncate" title={formData.address}>{formData.address}</span>
+                )}
+              </div>
               <LocationPicker
                 onLocationSelect={handleLocationSelect}
+                initialLocation={currentLocation ?? undefined}
                 className="w-full"
               />
               {formData.address && (
