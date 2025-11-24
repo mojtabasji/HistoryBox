@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
+import HeaderCoinCount from '@/components/HeaderCoinCount';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -21,7 +22,7 @@ type Memory = {
 };
 
 export default function Dashboard() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, coins } = useAuth();
   const router = useRouter();
   const [memories, setMemories] = useState<Memory[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -96,6 +97,7 @@ export default function Dashboard() {
               <Link href="/coins" className="hb-btn-accent px-4 py-2 text-sm">{t('buyCoins')}</Link>
               <Link href="/" className="hb-btn-primary px-4 py-2 text-sm">{t('viewMap')}</Link>
               <Link href="/add-memory" className="hb-btn-primary px-4 py-2 text-sm">{t('addMemory')}</Link>
+              {typeof coins === 'number' && <HeaderCoinCount value={coins} />}
               <div className="text-right text-xs text-gray-700">
                 <div className={user?.phoneNumber ? 'rtl-num' : undefined}>{user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}</div>
                 <div className={"text-[11px] text-gray-500 " + (user?.phoneNumber ? 'rtl-num' : '')}>{t('phone')}: {user?.phoneNumber || '—'}</div>
@@ -115,6 +117,7 @@ export default function Dashboard() {
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </Link>
+              {typeof coins === 'number' && <HeaderCoinCount value={coins} small />}
               <button
                 onClick={() => setMobileMenuOpen(s => !s)}
                 className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
+import HeaderCoinCount from '@/components/HeaderCoinCount';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
@@ -11,7 +12,7 @@ import ImageUpload from '../../components/ImageUpload';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function AddMemory() {
-  const { user, loading } = useAuth();
+  const { user, loading, coins } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
@@ -167,6 +168,7 @@ export default function AddMemory() {
             <div className="flex items-center gap-3">
               <Link href="/" className="hb-btn-primary px-4 py-2 text-sm">{t('viewMap')}</Link>
               <Link href="/dashboard" className="hb-btn-primary px-4 py-2 text-sm">{t('dashboard')}</Link>
+              {typeof coins === 'number' && <HeaderCoinCount value={coins} />}
             </div>
           </div>
           {/* Mobile */}
@@ -181,6 +183,7 @@ export default function AddMemory() {
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </Link>
+              {typeof coins === 'number' && <HeaderCoinCount value={coins} small />}
               <button
                 onClick={() => setMobileMenuOpen(s => !s)}
                 className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
