@@ -62,6 +62,7 @@ export default function Home() {
   const [mapInstance, setMapInstance] = useState<LeafletMapType | null>(null);
   const [LRef, setLRef] = useState<typeof import('leaflet') | null>(null);
   const [showGrid, setShowGrid] = useState(false);
+  const [useHotLayer, setUseHotLayer] = useState(false);
   const [visibleRegions, setVisibleRegions] = useState<RegionMarker[]>([]);
   const [clusterTotals, setClusterTotals] = useState<Record<number, number>>({});
   const [unlocked, setUnlocked] = useState<Record<string, boolean>>({});
@@ -242,10 +243,17 @@ export default function Home() {
         inertia={false}
         touchZoom={'center'}
       >
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {useHotLayer ? (
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors, Humanitarian style &copy; HOT'
+            url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='&copy; OpenStreetMap contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        )}
         {/* Default zoom control removed; custom control rendered as overlay */}
         <MapInstanceSetter onReady={setMapInstance} />
         {(visibleRegions.length ? visibleRegions : regions).map((r) => {
@@ -447,6 +455,31 @@ export default function Home() {
               )}
               {/* active dot indicator */}
               {showGrid && <span className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full" aria-hidden="true" />}
+            </button>
+
+            {/* HOT layer toggle */}
+            <button
+              onClick={() => setUseHotLayer((v) => !v)}
+              className={`btn-h btn-w rounded-md shadow-md flex items-center justify-center transition-colors ${useHotLayer ? 'bg-indigo-600 text-white' : 'bg-white/80 backdrop-blur text-gray-800 hover:bg-white'}`}
+              title={useHotLayer ? 'خاموش کردن لایه HOT' : 'فعال کردن لایه Humanitarian (HOT)'}
+              aria-label={useHotLayer ? 'خاموش کردن لایه HOT' : 'فعال کردن لایه Humanitarian (HOT)'}
+              aria-pressed={useHotLayer}
+            >
+              {useHotLayer ? (
+                /* Active: layered stack with highlight */
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7">
+                  <path d="M3 12l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 8l9 6 9-6-9-6-9 6z" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 16l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" opacity="0.4" />
+                </svg>
+              ) : (
+                /* Inactive: two stacked layers */
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-7 h-7 text-gray-700">
+                  <path d="M3 8l9 6 9-6-9-6-9 6z" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M3 12l9 6 9-6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+              {useHotLayer && <span className="absolute top-1 right-1 h-2 w-2 bg-white rounded-full" aria-hidden="true" />}
             </button>
 
                 {user ? (
