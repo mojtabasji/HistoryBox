@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SuperTokensAuthProvider } from "@/contexts/SuperTokensAuthContext";
-import { Vazirmatn } from "next/font/google";
+import { Rubik } from "next/font/google";
 
-// Persian font (Vazirmatn) for improved legibility of Farsi text
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic", "latin"],
+// Replace previous Vazirmatn with Google Rubik as requested.
+// Note: Rubik does not include Persian (Arabic) glyphs; unsupported characters will fall back.
+// If full Persian coverage is needed later consider pairing with Vazirmatn or Noto Naskh Arabic.
+const rubik = Rubik({
+  subsets: ["latin", "latin-ext"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-fa",
   display: "swap",
@@ -22,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl" className={vazirmatn.variable}>
+    <html lang="fa" dir="rtl" className={rubik.variable}>
       <body className="antialiased font-fa">
         <SuperTokensAuthProvider>
           {/* Global UI overlays (moved to homepage) */}

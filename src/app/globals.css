@@ -25,7 +25,7 @@ body {
 
 /* Persian font utility (applied globally via layout) */
 .font-fa {
-  font-family: var(--font-fa), var(--font-geist-sans), "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-fa), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
 }

@@ -250,18 +250,20 @@ export default function Home() {
         <MapInstanceSetter onReady={setMapInstance} />
         {(visibleRegions.length ? visibleRegions : regions).map((r) => {
           const totalCount = clusterTotals[r.id] ?? r.postCount;
-          const caption = totalCount ? `${totalCount} ${t('photosHere')}` : t('hiddenPhotosHere');
+          const captionHtml = totalCount
+            ? `<div class="hb-caption rtl-num" style="margin-top:6px;padding:4px 10px;border-radius:16px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);font-size:11.5px;line-height:1.25;color:#111;white-space:nowrap;max-width:150px;text-overflow:ellipsis;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.35);font-weight:600;border:1px solid rgba(255,255,255,0.6)"><span style="background:#4f46e5;color:#fff;font-weight:700;padding:0 6px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.25);display:inline-block;text-align:center">${totalCount}</span> <span>${t('photosHere')}</span></div>`
+            : `<div class="hb-caption rtl-num" style="margin-top:6px;padding:4px 10px;border-radius:16px;background:linear-gradient(135deg,#1e293b,#334155);font-size:11.5px;line-height:1.25;color:#fff;white-space:nowrap;max-width:150px;text-overflow:ellipsis;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,0.45);font-weight:600"><span style="display:inline-flex;align-items:center;gap:4px">🔒 ${t('hiddenPhotosHere')}</span></div>`;
           const thumb = r.imageUrl || '/vercel.svg';
           const icon = LRef
             ? LRef.divIcon({
                 className: 'hb-marker',
                 html: `
                   <div class="hb-pin" style="display:inline-flex;flex-direction:column;align-items:center;">
-                    <div class="hb-bubble" style="width:96px;height:64px;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,0.25);background:#fff;overflow:hidden;border:1px solid rgba(0,0,0,0.1)">
+                    <div class="hb-bubble" style="width:130px;height:80px;border-radius:14px;box-shadow:0 8px 20px rgba(0,0,0,0.28);background:#fff;overflow:hidden;border:1px solid rgba(255,255,255,0.4)">
                       <div class="hb-img" style="width:100%;height:100%;background-size:cover;background-position:center;background-image:url('${thumb}')"></div>
                     </div>
-                    <div class="hb-arrow" style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #ffffff;filter:drop-shadow(0 2px 2px rgba(0,0,0,0.2));margin-top:-1px"></div>
-                    <div class="hb-caption rtl-num" style="margin-top:6px;padding:2px 8px;border-radius:9999px;background:rgba(255,255,255,0.95);backdrop-filter:blur(4px);font-size:11px;line-height:1.1;color:#111;white-space:nowrap;max-width:120px;text-overflow:ellipsis;overflow:hidden;border:1px solid rgba(0,0,0,0.08)">${caption}</div>
+                    <div class="hb-arrow" style="width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:12px solid #ffffff;filter:drop-shadow(0 3px 4px rgba(0,0,0,0.25));margin-top:-2px"></div>
+                    ${captionHtml}
                   </div>
                 `,
                 iconSize: [96, 84],
@@ -344,42 +346,38 @@ export default function Home() {
                   <div className="text-xs text-gray-700">
                     {isUnlocked ? (truncate(r.description || r.title, 5)) : (truncate(r.description || r.title, 5) + ' ' + t('lockedSuffix'))}
                   </div>
-                  <div className="mt-2 flex gap-2">
-                            <button
-                              onClick={async () => {
-                                // Two-step behavior: if this marker is an aggregated representative (combined)
-                                // and we haven't recently zoomed to it, first zoom in. A second click will navigate.
-                                try {
-                                  if (!mapInstance) {
-                                    // Fallback: navigate directly
-                                    window.location.href = `/region/${r.geohash}`;
-                                    return;
-                                  }
-                                  const total = clusterTotals[r.id] ?? r.postCount;
-                                  const combined = total > r.postCount;
-                                  const currentZoom = mapInstance.getZoom?.() ?? 0;
-                                  const zoomThreshold = 10; // if below this, we'll zoom first
-
-                                  if (combined && zoomedToId !== r.id && currentZoom < zoomThreshold) {
-                                  const targetZoom = Math.min(17, Math.max(currentZoom + 4, zoomThreshold));
-                                    mapInstance.flyTo([r.latitude, r.longitude], targetZoom, { duration: 0.9 });
-                                    setZoomedToId(r.id);
-                                    // Clear the zoomed hint after a short time so next action returns to normal
-                                    setTimeout(() => setZoomedToId(null), 6000);
-                                    return;
-                                  }
-
-                                  // Otherwise navigate to the region page
-                                  window.location.href = `/region/${r.geohash}`;
-                                } catch {
-                                  // Best-effort navigation on errors
-                                  window.location.href = `/region/${r.geohash}`;
-                                }
-                              }}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              {isUnlocked ? t('show') : t('unlock')}
-                            </button>
+                  <div className="mt-3">
+                    <button
+                      onClick={async () => {
+                        try {
+                          if (!mapInstance) {
+                            window.location.href = `/region/${r.geohash}`;
+                            return;
+                          }
+                          const total = clusterTotals[r.id] ?? r.postCount;
+                          const combined = total > r.postCount;
+                          const currentZoom = mapInstance.getZoom?.() ?? 0;
+                          const zoomThreshold = 10;
+                          if (combined && zoomedToId !== r.id && currentZoom < zoomThreshold) {
+                            const targetZoom = Math.min(17, Math.max(currentZoom + 4, zoomThreshold));
+                            mapInstance.flyTo([r.latitude, r.longitude], targetZoom, { duration: 0.9 });
+                            setZoomedToId(r.id);
+                            setTimeout(() => setZoomedToId(null), 6000);
+                            return;
+                          }
+                          window.location.href = `/region/${r.geohash}`;
+                        } catch {
+                          window.location.href = `/region/${r.geohash}`;
+                        }
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold py-2 shadow-md focus:outline-none focus:ring-2 focus:ring-white/50 transition"
+                      aria-label={isUnlocked ? t('show') : t('unlock')}
+                    >
+                      <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' className='w-4 h-4'>
+                        <path d='M12 5v14M5 12h14' strokeLinecap='round' />
+                      </svg>
+                      <span className='rtl-num'>{isUnlocked ? t('show') : t('unlock')}</span>
+                    </button>
                   </div>
                 </div>
               </Popup>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { t } from '@/lib/i18n';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import ImageUpload from '@/components/ImageUpload';
 import LocationPicker from '@/components/LocationPicker';
@@ -45,7 +46,7 @@ export default function EditMemoryPage() {
       const res = await fetch(`/api/memories/${id}`);
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to load memory');
+        alert(data.error || t('loadingMemory'));
         router.push('/dashboard');
         return;
       }
@@ -100,7 +101,7 @@ export default function EditMemoryPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update');
-      alert('Memory updated');
+      alert(t('memoryUpdated'));
       router.push('/dashboard');
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Failed to update');
@@ -118,7 +119,7 @@ export default function EditMemoryPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span className="text-sm font-medium text-gray-900">Loading memory…</span>
+            <span className="text-sm font-medium text-gray-900">{t('loadingMemory')}</span>
           </div>
         </div>, document.body)}
       {isSaving && typeof window !== 'undefined' && createPortal(
@@ -128,7 +129,7 @@ export default function EditMemoryPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
             </svg>
-            <span className="text-sm font-medium text-gray-900">Saving…</span>
+            <span className="text-sm font-medium text-gray-900">{t('saving')}</span>
           </div>
         </div>, document.body)}
 
@@ -136,7 +137,7 @@ export default function EditMemoryPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold text-gray-900">Edit Memory</h1>
+              <h1 className="text-xl font-semibold text-gray-900 font-fa">{t('editMemory')}</h1>
             </div>
           </div>
         </div>
@@ -148,22 +149,22 @@ export default function EditMemoryPage() {
             <div className="bg-white shadow rounded-lg p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('titleLabel')} *</label>
                   <input className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={title} onChange={e=>setTitle(e.target.value)} required />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('dateLabel')}</label>
                   <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={date} onChange={e=>setDate(e.target.value)} />
                 </div>
               </div>
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('descriptionLabel')}</label>
                 <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={description} onChange={e=>setDescription(e.target.value)} />
               </div>
             </div>
 
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Photo</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 font-fa">{t('photo')}</h3>
               <ImageUpload
                 onImageUpload={(url)=> setImageUrl(url)}
                 currentImage={imageUrl}
@@ -174,18 +175,18 @@ export default function EditMemoryPage() {
             </div>
 
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Location</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 font-fa">{t('location')}</h3>
               <LocationPicker onLocationSelect={setLocation} initialLocation={{ lat: location.lat, lng: location.lng }} className="w-full" />
               {location.address && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm text-gray-600">
-                  <strong>Selected Location:</strong> {location.address}
+                <div className="mt-4 p-3 bg-gray-50 rounded-md text-sm text-gray-600 rtl-num">
+                  <strong>{t('selectedLocation')}:</strong> {location.address}
                 </div>
               )}
             </div>
 
             <div className="flex justify-end space-x-2">
-              <button type="button" onClick={() => router.push('/dashboard')} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
-              <button type="submit" disabled={isSaving} className={`px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white ${isSaving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{isSaving ? 'Saving…' : 'Save Changes'}</button>
+              <button type="button" onClick={() => router.push('/dashboard')} className="px-4 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 bg-white shadow-sm">{t('cancel')}</button>
+              <button type="submit" disabled={isSaving} className={`px-4 py-2 rounded-md text-sm font-medium text-white shadow ${isSaving ? 'bg-indigo-400 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{isSaving ? t('saving') : t('saveChanges')}</button>
             </div>
           </form>
         </div>

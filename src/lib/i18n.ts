@@ -64,6 +64,18 @@ export const fa = {
   prev: 'قبلی',
   next: 'بعدی',
   totalPostsSuffix: 'پست',
+  editMemory: 'ویرایش خاطره',
+  titleLabel: 'عنوان',
+  dateLabel: 'تاریخ',
+  descriptionLabel: 'توضیحات',
+  photo: 'عکس',
+  location: 'موقعیت',
+  selectedLocation: 'موقعیت انتخاب‌شده',
+  cancel: 'انصراف',
+  saveChanges: 'ذخیره تغییرات',
+  saving: 'در حال ذخیره…',
+  loadingMemory: 'در حال بارگذاری خاطره…',
+  memoryUpdated: 'خاطره با موفقیت به‌روزرسانی شد',
 };
 
 export type FaKey = keyof typeof fa;
