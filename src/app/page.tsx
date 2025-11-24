@@ -628,7 +628,8 @@ function MapInstanceSetter({ onReady }: { onReady: (map: LeafletMapType) => void
 function LocateMe({ map }: { map: LeafletMapType | null }) {
   const [locating, setLocating] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
-  const onClick = () => {
+  const isIOS = () => typeof navigator !== 'undefined' && /iP(hone|ad|od)/.test(navigator.userAgent);
+  const onClick = async () => {
     setErr(null);
     if (!map) {
       setErr(t('mapNotReady'));
@@ -638,6 +639,26 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       setErr(t('geolocationUnsupported'));
       return;
     }
+    try {
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        setErr('برای استفاده از موقعیت‌یاب، وب‌سایت باید با HTTPS باز شود یا روی localhost اجرا شود.');
+        return;
+      }
+      type GeoPermissionStatus = { state?: 'granted' | 'denied' | 'prompt' };
+      type PermissionsLike = { query: (arg: { name: 'geolocation' }) => Promise<GeoPermissionStatus> };
+      const perms = (navigator as unknown as { permissions?: PermissionsLike }).permissions;
+      if (perms?.query) {
+        try {
+          const status = await perms.query({ name: 'geolocation' });
+          if (status?.state === 'denied') {
+            setErr(isIOS()
+              ? 'دسترسی موقعیت در iOS مسدود است. در Settings > Privacy > Location Services > Safari Websites را روی While Using/Ask بگذارید یا در Safari روی aA > Website Settings > Location اجازه دهید، سپس صفحه را بازآوری کنید.'
+              : 'دسترسی موقعیت مسدود است. در تنظیمات مرورگر، دسترسی Location را برای این وب‌سایت فعال کنید و دوباره تلاش کنید.');
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -660,7 +681,18 @@ function LocateMe({ map }: { map: LeafletMapType | null }) {
       },
       (e) => {
         setLocating(false);
-        setErr(e.message || t('locationFailed'));
+        const code = (e && (e as GeolocationPositionError).code) || 0;
+        if (code === 1) {
+          setErr(isIOS()
+            ? 'دسترسی مکان رد شد. برای فعال‌سازی: Settings > Privacy > Location Services > Safari Websites و گزینه While Using/Ask را انتخاب کنید؛ یا در Safari روی aA > Website Settings > Location اجازه دهید.'
+            : 'دسترسی مکان رد شد. لطفاً در تنظیمات مرورگر، اجازه دسترسی Location به این سایت را فعال کنید.');
+        } else if (code === 2) {
+          setErr('امکان دریافت موقعیت وجود ندارد. لطفاً اتصال GPS/اینترنت را بررسی کرده و دوباره تلاش کنید.');
+        } else if (code === 3) {
+          setErr('زمان دریافت موقعیت تمام شد. لطفاً دوباره تلاش کنید یا نزدیک پنجره قرار بگیرید.');
+        } else {
+          setErr(e.message || t('locationFailed'));
+        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );

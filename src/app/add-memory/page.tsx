@@ -63,6 +63,27 @@ export default function AddMemory() {
       alert('مرورگر شما از موقعیت‌یاب پشتیبانی نمی‌کند');
       return;
     }
+    try {
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        alert('برای استفاده از موقعیت‌یاب، وب‌سایت باید با HTTPS باز شود یا روی localhost اجرا شود.');
+        return;
+      }
+      const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent);
+      type GeoPermissionStatus = { state?: 'granted' | 'denied' | 'prompt' };
+      type PermissionsLike = { query: (arg: { name: 'geolocation' }) => Promise<GeoPermissionStatus> };
+      const perms = (navigator as unknown as { permissions?: PermissionsLike }).permissions;
+      if (perms?.query) {
+        try {
+          const status = await perms.query({ name: 'geolocation' });
+          if (status?.state === 'denied') {
+            alert(isIOS
+              ? 'دسترسی موقعیت در iOS مسدود است. به Settings > Privacy > Location Services > Safari Websites بروید و While Using/Ask را انتخاب کنید یا در Safari روی aA > Website Settings > Location اجازه دهید، سپس صفحه را بازآوری کنید.'
+              : 'دسترسی موقعیت مسدود است. در تنظیمات مرورگر، دسترسی Location را برای این وب‌سایت فعال کنید و دوباره تلاش کنید.');
+            return;
+          }
+        } catch { /* ignore */ }
+      }
+    } catch { /* ignore */ }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude, longitude } = pos.coords;
@@ -79,7 +100,16 @@ export default function AddMemory() {
       setLocating(false);
     }, (err) => {
       console.error(err);
-      alert('دریافت موقعیت ناموفق بود');
+      const code = (err && (err as GeolocationPositionError).code) || 0;
+      if (code === 1) {
+        alert('دسترسی مکان رد شد. لطفاً در تنظیمات مرورگر اجازه دسترسی Location را به این سایت بدهید. در iOS: Settings > Privacy > Location Services > Safari Websites یا aA > Website Settings > Location.');
+      } else if (code === 2) {
+        alert('امکان دریافت موقعیت وجود ندارد. لطفاً اتصال GPS/اینترنت را بررسی کرده و دوباره تلاش کنید.');
+      } else if (code === 3) {
+        alert('زمان دریافت موقعیت تمام شد. لطفاً دوباره تلاش کنید.');
+      } else {
+        alert('دریافت موقعیت ناموفق بود');
+      }
       setLocating(false);
     }, { enableHighAccuracy: true, timeout: 10000 });
   };
