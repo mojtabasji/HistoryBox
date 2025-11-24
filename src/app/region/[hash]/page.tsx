@@ -24,8 +24,10 @@ type ApiResponse = {
 };
 
 export default function RegionPage() {
-  const params = useParams<{ hash: string }>();
-  const regionHash = params?.hash;
+  // Next.js useParams does not support generics reliably across versions; normalize value
+  const params = useParams();
+  const rawHash = params?.hash as string | string | undefined;
+  const regionHash = Array.isArray(rawHash) ? rawHash[0] : (rawHash || '');
   const router = useRouter();
   const { user, setCoins: setGlobalCoins, coins: globalCoins } = useAuth();
   const [data, setData] = useState<ApiResponse | null>(null);
@@ -46,6 +48,7 @@ export default function RegionPage() {
     setLoading(true);
     setError(null);
     try {
+      if (!regionHash) throw new Error(t('loadingRegion'));
       const res = await fetch(`/api/regions/${regionHash}/posts`, { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || t('loadingRegion'));
@@ -81,7 +84,7 @@ export default function RegionPage() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Unlock failed');
-  if (typeof json.coins === 'number') { setLocalCoins(json.coins); setGlobalCoins(json.coins); }
+      if (typeof json.coins === 'number') { setLocalCoins(json.coins); setGlobalCoins(json.coins); }
       await load();
     } catch (e) {
       alert(e instanceof Error ? e.message : 'Unlock failed');
@@ -172,7 +175,7 @@ export default function RegionPage() {
             <div className="hidden md:flex justify-between h-16 items-center">
               <div className="flex items-center gap-3">
                 <button onClick={() => router.push('/')} className="hb-btn-primary px-3 py-2 text-sm">{t('backToMap')}</button>
-                <h1 className="text-xl font-semibold hb-brand font-fa">{t('region')}</h1>
+                <h1 className="text-xl font-semibold hb-brand font-fa">{t('brand')}</h1>
               </div>
               <div className="flex items-center gap-3">
                 {user ? (
@@ -186,23 +189,39 @@ export default function RegionPage() {
                     <Link href="/signup" className="hb-btn-primary px-3 py-2 text-sm">{t('signup')}</Link>
                   </>
                 )}
+                {(coins !== null || globalCoins !== null) && (
+                  <CoinCount value={(coins ?? globalCoins) ?? 0} />
+                )}
               </div>
             </div>
             {/* Mobile header */}
-            <div className="md:hidden flex justify-between h-14 items-center">
-              <h1 className="text-lg font-semibold hb-brand font-fa">{t('region')}</h1>
-              <button
-                onClick={() => setMobileMenuOpen(s => !s)}
-                className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
-                aria-label="Toggle menu"
-                aria-pressed={mobileMenuOpen}
-              >
-                {mobileMenuOpen ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+            <div className="md:hidden flex items-center justify-between h-14 gap-2">
+              <h1 className="text-lg font-semibold hb-brand font-fa">{t('brand')}</h1>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/"
+                  className="h-10 w-10 rounded-md shadow-md flex items-center justify-center hb-btn-primary text-sm"
+                  aria-label={t('viewMap')}
+                  title={t('viewMap')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </Link>
+                {(coins !== null || globalCoins !== null) && (
+                  <CoinCount value={(coins ?? globalCoins) ?? 0} small />
                 )}
-              </button>
+                <button
+                  onClick={() => setMobileMenuOpen(s => !s)}
+                  className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
+                  aria-label="Toggle menu"
+                  aria-pressed={mobileMenuOpen}
+                >
+                  {mobileMenuOpen ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+                  )}
+                </button>
+              </div>
             </div>
             {mobileMenuOpen && (
               <div className="md:hidden mt-2 bg-white rounded-lg shadow p-3 flex flex-col gap-2">
@@ -222,6 +241,17 @@ export default function RegionPage() {
             )}
           </div>
         </nav>
+
+        {/* Region heading under header */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+          {loading && !data ? (
+            <div className="text-sm text-gray-600">{t('loadingRegion')}</div>
+          ) : error ? (
+            <div className="text-sm text-red-700">{error}</div>
+          ) : data ? (
+            <h2 className="text-xl font-bold hb-brand font-fa rtl-num">{t('region')} {data.region.hash}</h2>
+          ) : null}
+        </div>
 
   <main className="relative max-w-6xl mx-auto px-4 py-6">
   {loading && <Loading label={t('loadingRegion')} variant="inset" />}
@@ -424,6 +454,18 @@ export default function RegionPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function CoinCount({ value, small = false }: { value: number; small?: boolean }) {
+  return (
+    <div
+      className={`rtl-num rounded-md shadow-md bg-white/80 backdrop-blur flex items-center justify-center font-semibold text-gray-700 ${small ? 'h-10 px-2 text-sm' : 'h-10 px-3 text-sm'}`}
+      title={t('yourCoins')}
+      aria-label={t('yourCoins')}
+    >
+      {value}
     </div>
   );
 }

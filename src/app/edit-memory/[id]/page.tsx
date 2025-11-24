@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { t } from '@/lib/i18n';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import ImageUpload from '@/components/ImageUpload';
@@ -133,11 +134,37 @@ export default function EditMemoryPage() {
           </div>
         </div>, document.body)}
 
-      <nav className="bg-white shadow">
+      <nav className="bg-white shadow relative z-[1000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold hb-brand font-fa">{t('editMemory')}</h1>
+          {/* Desktop header */}
+          <div className="hidden md:flex justify-between h-16 items-center">
+            <h1 className="text-xl font-semibold hb-brand font-fa">{t('editMemory')}</h1>
+            <div className="flex items-center gap-3">
+              <Link href="/" className="hb-btn-primary px-4 py-2 text-sm">{t('viewMap')}</Link>
+              <Link href="/dashboard" className="hb-btn-primary px-4 py-2 text-sm">{t('dashboard')}</Link>
+            </div>
+          </div>
+          {/* Mobile header */}
+          <div className="md:hidden flex items-center justify-between h-14 gap-2">
+            <h1 className="text-lg font-semibold hb-brand font-fa">{t('editMemory')}</h1>
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="h-10 w-10 rounded-md shadow-md flex items-center justify-center hb-btn-primary text-sm"
+                aria-label={t('viewMap')}
+                title={t('viewMap')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3V7" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </Link>
+              {/* Merged buttons component (minimal for edit page) */}
+              <Link
+                href="/dashboard"
+                className="h-10 w-10 rounded-md shadow-md flex items-center justify-center bg-white text-gray-800 hover:bg-gray-100"
+                aria-label={t('dashboard')}
+                title={t('dashboard')}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/></svg>
+              </Link>
             </div>
           </div>
         </div>

@@ -76,6 +76,8 @@ export const fa = {
   saving: 'در حال ذخیره…',
   loadingMemory: 'در حال بارگذاری خاطره…',
   memoryUpdated: 'خاطره با موفقیت به‌روزرسانی شد',
+  login: 'ورود',
+  signup: 'ثبت‌نام',
 };
 
 export type FaKey = keyof typeof fa;
