@@ -1,11 +1,11 @@
 export type PlanId = 'starter' | 'lite' | 'standard' | 'pro' | 'mega';
 
 export const PLAN_MAP: Record<PlanId, { coins: number; priceIrr: number }> = {
-  starter: { coins: 10, priceIrr: 99000 },
-  lite: { coins: 50, priceIrr: 249000 },
-  standard: { coins: 120, priceIrr: 499000 },
-  pro: { coins: 300, priceIrr: 990000 },
-  mega: { coins: 700, priceIrr: 1990000 },
+  starter: { coins: 20, priceIrr: 150000 },
+  lite: { coins: 50, priceIrr: 500000 },
+  standard: { coins: 120, priceIrr: 900000 },
+  pro: { coins: 300, priceIrr: 2300000 },
+  mega: { coins: 700, priceIrr: 5000000 },
 };
 
 export function isValidPlan(planId: string): planId is PlanId {
