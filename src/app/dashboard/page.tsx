@@ -27,6 +27,7 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [loadingMemories, setLoadingMemories] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -84,38 +85,52 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
+      <nav className="bg-white shadow relative z-[1000]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+          {/* Desktop header */}
+          <div className="hidden md:flex justify-between h-16 items-center">
             <div className="flex items-center">
               <h1 className="text-xl font-semibold hb-brand font-fa">{t('brand')}</h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <Link 
-                href="/coins" 
-                className="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                {t('buyCoins')}
-              </Link>
-              <Link 
-                href="/" 
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                {t('viewMap')}
-              </Link>
-              <Link
-                href="/add-memory"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                {t('addMemory')}
-              </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/coins" className="hb-btn-accent px-4 py-2 text-sm">{t('buyCoins')}</Link>
+              <Link href="/" className="hb-btn-primary px-4 py-2 text-sm">{t('viewMap')}</Link>
+              <Link href="/add-memory" className="hb-btn-primary px-4 py-2 text-sm">{t('addMemory')}</Link>
               <div className="text-right text-xs text-gray-700">
                 <div className={user?.phoneNumber ? 'rtl-num' : undefined}>{user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}</div>
                 <div className={"text-[11px] text-gray-500 " + (user?.phoneNumber ? 'rtl-num' : '')}>{t('phone')}: {user?.phoneNumber || '—'}</div>
               </div>
-              <button onClick={handleLogout} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium">{t('logout')}</button>
+              <button onClick={handleLogout} className="hb-btn-primary px-4 py-2 text-sm">{t('logout')}</button>
             </div>
           </div>
+          {/* Mobile header */}
+          <div className="md:hidden flex justify-between h-14 items-center">
+            <h1 className="text-lg font-semibold hb-brand font-fa">{t('brand')}</h1>
+            <button
+              onClick={() => setMobileMenuOpen(s => !s)}
+              className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
+              aria-label="Toggle menu"
+              aria-pressed={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+              )}
+            </button>
+          </div>
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-2 bg-white rounded-lg shadow p-3 flex flex-col gap-2">
+              <div className="text-right text-xs text-gray-700">
+                <div className={user?.phoneNumber ? 'rtl-num' : undefined}>{user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}</div>
+                <div className={"text-[11px] text-gray-500 " + (user?.phoneNumber ? 'rtl-num' : '')}>{t('phone')}: {user?.phoneNumber || '—'}</div>
+              </div>
+              <Link href="/coins" className="hb-btn-accent h-10 inline-flex items-center justify-center rounded-md">{t('buyCoins')}</Link>
+              <Link href="/" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('viewMap')}</Link>
+              <Link href="/add-memory" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('addMemory')}</Link>
+              <button onClick={handleLogout} className="hb-btn-primary h-10 rounded-md">{t('logout')}</button>
+            </div>
+          )}
         </div>
       </nav>
 

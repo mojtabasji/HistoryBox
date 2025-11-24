@@ -39,6 +39,7 @@ export default function RegionPage() {
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const panStart = React.useRef<{ x: number; y: number } | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // index-based slider; we derive current index from viewerPost
 
   const load = async () => {
@@ -165,29 +166,62 @@ export default function RegionPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-xs md:text-sm shadow focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>{t('backToMap')}</span>
-            </Link>
-            {data && (
-              <div className="text-gray-900 font-semibold rtl-num">{t('region')} {data.region.hash}</div>
+        <nav className="bg-white shadow relative z-[1000]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Desktop header */}
+            <div className="hidden md:flex justify-between h-16 items-center">
+              <div className="flex items-center gap-3">
+                <button onClick={() => router.push('/')} className="hb-btn-primary px-3 py-2 text-sm">{t('backToMap')}</button>
+                <h1 className="text-xl font-semibold hb-brand font-fa">{t('region')}</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                {user ? (
+                  <>
+                    <Link href="/dashboard" className="hb-btn-primary px-3 py-2 text-sm">{t('dashboard')}</Link>
+                    <Link href="/add-memory" className="hb-btn-primary px-3 py-2 text-sm">{t('addMemory')}</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="hb-btn-primary px-3 py-2 text-sm">{t('login')}</Link>
+                    <Link href="/signup" className="hb-btn-primary px-3 py-2 text-sm">{t('signup')}</Link>
+                  </>
+                )}
+              </div>
+            </div>
+            {/* Mobile header */}
+            <div className="md:hidden flex justify-between h-14 items-center">
+              <h1 className="text-lg font-semibold hb-brand font-fa">{t('region')}</h1>
+              <button
+                onClick={() => setMobileMenuOpen(s => !s)}
+                className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
+                aria-label="Toggle menu"
+                aria-pressed={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+                )}
+              </button>
+            </div>
+            {mobileMenuOpen && (
+              <div className="md:hidden mt-2 bg-white rounded-lg shadow p-3 flex flex-col gap-2">
+                <button onClick={() => router.push('/')} className="hb-btn-primary h-10 rounded-md">{t('backToMap')}</button>
+                {user ? (
+                  <>
+                    <Link href="/dashboard" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('dashboard')}</Link>
+                    <Link href="/add-memory" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('addMemory')}</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('login')}</Link>
+                    <Link href="/signup" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('signup')}</Link>
+                  </>
+                )}
+              </div>
             )}
           </div>
-          {(coins !== null || globalCoins !== null) && (
-            <div className="text-sm text-gray-700 rtl-num bg-white/70 backdrop-blur px-3 py-1 rounded-md shadow-md">
-              {t('yourCoins')}: <span className="font-semibold" dir="rtl">{(coins ?? globalCoins) ?? 0}</span>
-            </div>
-          )}
-        </div>
-      </nav>
+        </nav>
 
   <main className="relative max-w-6xl mx-auto px-4 py-6">
   {loading && <Loading label={t('loadingRegion')} variant="inset" />}

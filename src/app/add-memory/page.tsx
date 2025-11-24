@@ -22,6 +22,7 @@ export default function AddMemory() {
     longitude: 0,
     address: ''
   });
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -43,31 +44,18 @@ export default function AddMemory() {
     return null;
   }
 
-  const handleImageUpload = (imageUrl: string) => {
-    setFormData(prev => ({ ...prev, imageUrl }));
+  const handleImageUpload = (url: string) => {
+    setFormData(prev => ({ ...prev, imageUrl: url }));
   };
 
-  const handleLocationSelect = (location: { lat: number; lng: number; address?: string }) => {
-    setFormData(prev => ({
-      ...prev,
-      latitude: location.lat,
-      longitude: location.lng,
-      address: location.address || ''
-    }));
+  const handleLocationSelect = (loc: { lat: number; lng: number; address?: string }) => {
+    setFormData(prev => ({ ...prev, latitude: loc.lat, longitude: loc.lng, address: loc.address ?? prev.address }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!user || !formData.title || (formData.latitude === 0 && formData.longitude === 0)) {
-      alert('Please fill in all required fields and ensure location is selected.');
-      return;
-    }
-
     setIsSubmitting(true);
-    
     try {
-      // Upload image now if deferred
       let imageUrl = formData.imageUrl;
       if (!imageUrl) {
         if (!selectedFile) {
@@ -75,7 +63,6 @@ export default function AddMemory() {
           setIsSubmitting(false);
           return;
         }
-        // Convert to base64
         const base64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(selectedFile);
@@ -92,12 +79,9 @@ export default function AddMemory() {
         imageUrl = uploadJson.url as string;
       }
 
-      // Send memory data to API; session is carried via cookies
       const response = await fetch('/api/memories', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: formData.title,
           description: formData.description,
@@ -105,31 +89,17 @@ export default function AddMemory() {
           latitude: formData.latitude,
           longitude: formData.longitude,
           address: formData.address,
-          date: formData.date
-        })
+          date: formData.date,
+        }),
       });
-
       const result = await response.json();
-
-      if (response.ok) {
-        alert('Memory saved successfully!');
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          date: '',
-          imageUrl: '',
-          latitude: 0,
-          longitude: 0,
-          address: ''
-        });
-        setSelectedFile(null);
-        // Redirect to dashboard
-        router.push('/dashboard');
-      } else {
-        console.error('Error saving memory:', result.error);
-        alert(`Failed to save memory: ${result.error}`);
+      if (!response.ok) {
+        throw new Error(result?.error || 'Failed to save memory');
       }
+      alert('Memory saved successfully!');
+      setFormData({ title: '', description: '', date: '', imageUrl: '', latitude: 0, longitude: 0, address: '' });
+      setSelectedFile(null);
+      router.push('/dashboard');
     } catch (error) {
       console.error('Error submitting form:', error);
       alert('Failed to save memory. Please try again.');
@@ -157,32 +127,41 @@ export default function AddMemory() {
         </div>,
         document.body
       )}
-      {/* Navigation Bar */}
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-semibold hb-brand">{t('brand')}</h1>
-              <div className="hidden md:flex space-x-4">
-                <a href="/dashboard" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                  داشبورد
-                </a>
-                <Link href="/" className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">
-                  مشاهده نقشه
-                </Link>
-                <a href="/add-memory" className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium">
-                  {t('addMemory')}
-                </a>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className={"text-gray-700 " + (user?.phoneNumber ? 'rtl-num' : '')}>
-                {user?.phoneNumber ? `${t('welcome')}, ${user.phoneNumber}` : t('welcome')}
-              </span>
+      {/* Header */}
+      <header className="bg-white shadow relative z-[1000]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {/* Desktop */}
+          <div className="hidden md:flex items-center justify-between">
+            <h1 className="text-xl font-semibold hb-brand font-fa">{t('addMemory')}</h1>
+            <div className="flex items-center gap-3">
+              <Link href="/" className="hb-btn-primary px-4 py-2 text-sm">{t('viewMap')}</Link>
+              <Link href="/dashboard" className="hb-btn-primary px-4 py-2 text-sm">{t('dashboard')}</Link>
             </div>
           </div>
+          {/* Mobile */}
+          <div className="md:hidden flex items-center justify-between h-12">
+            <h1 className="text-lg font-semibold hb-brand font-fa">{t('addMemory')}</h1>
+            <button
+              onClick={() => setMobileMenuOpen(s => !s)}
+              className={`h-10 w-10 rounded-md shadow-md flex items-center justify-center ${mobileMenuOpen ? 'bg-indigo-600 text-white' : 'bg-white text-gray-800'}`}
+              aria-label="Toggle menu"
+              aria-pressed={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-6 h-6"><path d="M3 6h18M3 12h18M3 18h18" strokeLinecap="round"/></svg>
+              )}
+            </button>
+          </div>
+          {mobileMenuOpen && (
+            <div className="md:hidden mt-2 bg-white rounded-lg shadow p-3 flex flex-col gap-2">
+              <Link href="/" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('viewMap')}</Link>
+              <Link href="/dashboard" className="hb-btn-primary h-10 inline-flex items-center justify-center rounded-md">{t('dashboard')}</Link>
+            </div>
+          )}
         </div>
-      </nav>
+      </header>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
