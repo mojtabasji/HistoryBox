@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { findOrCreateRegion } from '../../../lib/geohash';
 import { getSupabaseServer } from '@/lib/supabaseServer';
 import { getAuthUserFromRequest } from '@/lib/authServer';
@@ -58,17 +59,17 @@ export async function POST(request: NextRequest) {
 
     // Create the memory post (primary store via Prisma)
     // Be resilient to schema variants: some deployments may require a regionHash column on Post, others may not.
-    const baseData: Record<string, unknown> = {
+    const baseData: Prisma.PostCreateInput = {
       title,
-      description,
+      description: description || undefined,
+      caption: (description || title) || undefined,
       imageUrl,
       latitude,
       longitude,
-      address,
-      memoryDate,
+      address: address || undefined,
+      memoryDate: memoryDate || undefined,
       user: { connect: { id: user.id } },
       region: { connect: { id: region.id } },
-      caption: description || title,
     };
 
     const include = {
@@ -88,28 +89,23 @@ export async function POST(request: NextRequest) {
 
     let post: unknown;
     let newCoins = currentCoins;
-    // Perform create + region update + coin decrement in a transaction
+    // Perform create + region update + coin decrement in a transaction (with timeout to avoid P2028 in dev reloads)
     await prisma.$transaction(async (tx) => {
+      // Try create without regionHash first; fallback to including regionHash if schema requires it.
+      const attemptCreate = async (dataObj: Prisma.PostCreateInput) => tx.post.create({ data: dataObj, include });
       try {
-        post = await (tx.post as unknown as {
-          create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
-        }).create({ data: baseData, include });
+        post = await attemptCreate(baseData);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         const needsRegionHash = /Argument\s+`?regionHash`?\s+is\s+missing|Missing\s+required\s+value.*regionHash/i.test(msg);
         if (!needsRegionHash) throw err;
-        const geohash = (region as unknown as { geohash?: string })?.geohash;
-        const withHash: Record<string, unknown> = { ...baseData, regionHash: geohash };
-        post = await (tx.post as unknown as {
-          create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
-        }).create({ data: withHash, include });
+        const geohash = (region as { geohash?: string }).geohash || undefined;
+        post = await attemptCreate({ ...baseData, regionHash: geohash });
       }
 
       await tx.region.update({
         where: { id: region.id },
-        data: {
-          postCount: { increment: 1 },
-        },
+        data: { postCount: { increment: 1 } },
       });
 
       const updated = await tx.user.update({
@@ -118,7 +114,7 @@ export async function POST(request: NextRequest) {
         select: { coins: true },
       });
       newCoins = updated.coins;
-    });
+    }, { timeout: 20000, maxWait: 5000 });
 
     // Optionally mirror to Supabase if configured
     let supabaseMirror: { ok: boolean; error?: string } | undefined;

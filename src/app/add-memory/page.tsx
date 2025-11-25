@@ -130,17 +130,14 @@ export default function AddMemory() {
           setIsSubmitting(false);
           return;
         }
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(selectedFile);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (err) => reject(err);
-        });
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: base64 }),
-        });
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        if (uploadRes.status === 413) {
+          alert('حجم تصویر خیلی بزرگ است. لطفاً عکس کوچکتری انتخاب کنید (حداکثر 8MB).');
+          setIsSubmitting(false);
+          return;
+        }
         const uploadJson = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload failed');
         imageUrl = uploadJson.url as string;
