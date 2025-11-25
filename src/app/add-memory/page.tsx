@@ -12,7 +12,7 @@ import ImageUpload from '../../components/ImageUpload';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function AddMemory() {
-  const { user, loading, coins } = useAuth();
+  const { user, loading, coins, setCoins } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     title: '',
@@ -118,6 +118,11 @@ export default function AddMemory() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      if (typeof coins === 'number' && coins <= 5) {
+        alert('سکه کافی برای افزودن خاطره ندارید. لطفاً ابتدا سکه بخرید.');
+        setIsSubmitting(false);
+        return;
+      }
       let imageUrl = formData.imageUrl;
       if (!imageUrl) {
         if (!selectedFile) {
@@ -159,6 +164,9 @@ export default function AddMemory() {
         throw new Error(result?.error || 'Failed to save memory');
       }
       alert('Memory saved successfully!');
+      if (typeof result?.coins === 'number') {
+        setCoins(result.coins);
+      }
       setFormData({ title: '', description: '', date: '', imageUrl: '', latitude: 0, longitude: 0, address: '' });
       setSelectedFile(null);
       router.push('/dashboard');
@@ -242,7 +250,7 @@ export default function AddMemory() {
         <div className="px-4 py-6 sm:px-0">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">افزودن خاطره جدید</h2>
-            <p className="text-gray-600">
+            <p className="text-gray-700">
               یک لحظه خاص را با عکس و جزئیات مکان ثبت کنید.
             </p>
           </div>
@@ -293,7 +301,7 @@ export default function AddMemory() {
               </div>
 
               <div className="mt-6">
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="description" className="block text-sm font-medium text-gray-800 mb-2">
                   توضیحات
                 </label>
                 <textarea
@@ -302,7 +310,7 @@ export default function AddMemory() {
                   rows={4}
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                   placeholder="این خاطره را توضیح دهید..."
                 />
               </div>

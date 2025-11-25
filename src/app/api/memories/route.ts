@@ -76,30 +76,48 @@ export async function POST(request: NextRequest) {
       region: true,
     } as const;
 
-    let post: unknown;
-    try {
-      post = await (prisma.post as unknown as {
-        create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
-      }).create({ data: baseData, include });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      const needsRegionHash = /Argument\s+`?regionHash`?\s+is\s+missing|Missing\s+required\s+value.*regionHash/i.test(msg);
-      if (!needsRegionHash) throw err;
-      const geohash = (region as unknown as { geohash?: string })?.geohash;
-      const withHash: Record<string, unknown> = { ...baseData, regionHash: geohash };
-      post = await (prisma.post as unknown as {
-        create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
-      }).create({ data: withHash, include });
+    // Memory cost in coins (adjustable)
+    const MEMORY_COST = 6;
+
+    // Ensure user has enough coins
+    const userRow = await prisma.user.findUnique({ where: { id: user.id }, select: { coins: true } });
+    const currentCoins = userRow?.coins ?? 0;
+    if (currentCoins < MEMORY_COST) {
+      return NextResponse.json({ error: 'Not enough coins to add a memory', coins: currentCoins }, { status: 402 });
     }
 
-    // Update region post count
-    await prisma.region.update({
-      where: { id: region.id },
-      data: {
-        postCount: {
-          increment: 1
-        }
+    let post: unknown;
+    let newCoins = currentCoins;
+    // Perform create + region update + coin decrement in a transaction
+    await prisma.$transaction(async (tx) => {
+      try {
+        post = await (tx.post as unknown as {
+          create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
+        }).create({ data: baseData, include });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const needsRegionHash = /Argument\s+`?regionHash`?\s+is\s+missing|Missing\s+required\s+value.*regionHash/i.test(msg);
+        if (!needsRegionHash) throw err;
+        const geohash = (region as unknown as { geohash?: string })?.geohash;
+        const withHash: Record<string, unknown> = { ...baseData, regionHash: geohash };
+        post = await (tx.post as unknown as {
+          create: (args: { data: Record<string, unknown>; include: typeof include }) => Promise<unknown>;
+        }).create({ data: withHash, include });
       }
+
+      await tx.region.update({
+        where: { id: region.id },
+        data: {
+          postCount: { increment: 1 },
+        },
+      });
+
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: { coins: { decrement: MEMORY_COST } },
+        select: { coins: true },
+      });
+      newCoins = updated.coins;
     });
 
     // Optionally mirror to Supabase if configured
@@ -160,6 +178,7 @@ export async function POST(request: NextRequest) {
       memory: post,
       message: 'Memory saved successfully',
       supabase: supabaseMirror,
+      coins: newCoins,
     });
 
   } catch (error) {

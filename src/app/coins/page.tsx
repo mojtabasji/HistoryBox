@@ -71,13 +71,15 @@ export default function CoinsPage() {
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold flex items-center gap-3" dir="rtl">
+          <h1 className="text-2xl font-bold flex items-center gap-3 text-gray-900" dir="rtl">
             {t('buyCoins')}
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-amber-800 text-sm font-semibold rtl-num" title={`سکه‌های فعلی: ${coins ?? 0}`}>{t('yourCoins') + ":"} {coins ?? 0}</span>
+            <span className="inline-flex items-center gap-1 rounded-full hb-badge-accent px-3 py-1 text-sm rtl-num" title={`سکه‌های فعلی: ${coins ?? 0}`}>
+              {t('yourCoins') + ":"} {coins ?? 0}
+            </span>
           </h1>
-          <p className="text-sm text-gray-600">با خرید بسته‌های زیر، موجودی خود را افزایش دهید.</p>
+          <p className="text-sm text-gray-700">با خرید بسته‌های زیر، موجودی خود را افزایش دهید.</p>
         </div>
-        <Link href="/" className="inline-flex items-center rounded-md bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 text-sm font-medium shadow">
+        <Link href="/" className="inline-flex items-center rounded-md hb-btn-primary px-4 py-2 text-sm font-medium shadow">
           ← {t('backToMap')}
         </Link>
       </div>
@@ -108,8 +110,8 @@ export default function CoinsPage() {
                 محبوب‌ترین
               </div>
             )}
-            <div className="mb-1 text-lg font-semibold rtl-num">{p.coins} سکه</div>
-            <div className="mb-4 text-2xl font-bold rtl-num">{formatIRR(p.price)}</div>
+            <div className="mb-1 text-lg font-semibold rtl-num text-gray-900">{p.coins} سکه</div>
+            <div className="mb-4 text-2xl font-bold rtl-num text-gray-900">{formatIRR(p.price)}</div>
             <ul className="mb-4 list-disc pl-5 text-sm text-gray-600">
               <li>دسترسی فوری به قابلیت‌ها</li>
               <li>بدون انقضا</li>
@@ -126,7 +128,7 @@ export default function CoinsPage() {
         ))}
       </div>
 
-      <div className="mt-10 text-sm text-gray-500">
+      <div className="mt-10 text-sm text-gray-600">
         توجه: پرداخت‌ها به صورت امن انجام می‌شود و به صفحه پرداخت هدایت خواهید شد.
       </div>
     </div>

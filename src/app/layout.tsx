@@ -18,6 +18,14 @@ export const metadata: Metadata = {
   description: "Your personal history tracking application",
 };
 
+// Prevent pinch/gesture zoom on mobile as requested
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+} as const;
+
 export default function RootLayout({
   children,
 }: Readonly<{
