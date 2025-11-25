@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<Params> | Par
       where: { regionId: region.id },
       orderBy: { createdAt: 'desc' },
       take: isUnlocked ? Math.max(10, unlockedCount) : 10,
-      select: { id: true, caption: true, description: true, imageUrl: true, createdAt: true, latitude: true, longitude: true }
+      select: { id: true, title: true, caption: true, description: true, imageUrl: true, createdAt: true, latitude: true, longitude: true }
     });
 
     if (!isUnlocked) {
@@ -59,6 +59,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<Params> | Par
       const teaser = posts.map(p => ({
         id: p.id,
         imageUrl: p.imageUrl,
+        title: p.title,
         caption: 'Locked',
         description: truncateWords(p.description || p.caption || 'Hidden memory', 5) + ' …locked',
         blurred: true,

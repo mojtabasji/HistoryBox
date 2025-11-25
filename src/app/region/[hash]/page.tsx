@@ -10,7 +10,7 @@ import { useAuth } from '@/contexts/SuperTokensAuthContext';
 type ApiPost = {
   id: number;
   imageUrl: string;
-  caption?: string | null;
+  title?: string | null;
   description?: string | null;
   createdAt?: string;
   blurred?: boolean;
@@ -283,7 +283,7 @@ export default function RegionPage() {
                     key={p.id}
                     type="button"
                     onClick={openViewer}
-                    className="text-left bg-white rounded-lg shadow overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="text-right bg-white rounded-lg shadow overflow-hidden focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
                     <div className="relative h-48">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -295,7 +295,7 @@ export default function RegionPage() {
                       )}
                     </div>
                     <div className="p-3 text-sm text-gray-800">
-                      <div className="font-medium mb-1">{p.caption || t('memory')}</div>
+                      <div className="font-medium mb-1">{p.title || t('memory')}</div>
                       {p.description && <div className="text-xs text-gray-600 line-clamp-2">{p.description}</div>}
                     </div>
                   </button>
@@ -368,14 +368,14 @@ export default function RegionPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={viewerPost.imageUrl}
-                  alt={viewerPost.caption || 'memory'}
+                  alt={viewerPost.title || 'memory'}
                   className="max-h-[95vh] max-w-[98vw] w-auto h-auto object-contain rounded shadow-lg"
                   style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transition: isPanning ? 'none' : 'transform 120ms ease-out', transformOrigin: 'center center' }}
                 />
               </div>
 
               <div className="mt-3 w-full max-w-[96vw] text-white">
-                <div className="text-lg font-semibold">{viewerPost.caption || t('memory')}</div>
+                <div className="text-lg font-semibold">{viewerPost.title || t('memory')}</div>
                 {viewerPost.description && (
                   <div className="mt-1 text-sm text-white/90 whitespace-pre-line">{viewerPost.description}</div>
                 )}
