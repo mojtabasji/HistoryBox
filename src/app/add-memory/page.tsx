@@ -130,8 +130,34 @@ export default function AddMemory() {
           setIsSubmitting(false);
           return;
         }
+        // Compress large images client-side to stay under Vercel body limits
+        const compressIfNeeded = async (file: File): Promise<File> => {
+          const MAX_DIRECT_BYTES = 4 * 1024 * 1024; // ~4MB threshold
+          if (file.size <= MAX_DIRECT_BYTES) return file;
+          const bitmap = await createImageBitmap(file);
+          const MAX_W = 1600;
+            const MAX_H = 1600;
+          let { width, height } = bitmap;
+          const scale = Math.min(1, MAX_W / width, MAX_H / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return file;
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(b => resolve(b), 'image/jpeg', 0.82);
+          });
+          if (!blob) return file;
+          // If compression didn't help enough, still return it
+          if (blob.size >= file.size) return file;
+          return new File([blob], file.name.replace(/\.[a-zA-Z]+$/, '.jpg'), { type: 'image/jpeg' });
+        };
+        const processedFile = await compressIfNeeded(selectedFile);
         const fd = new FormData();
-        fd.append('file', selectedFile);
+        fd.append('file', processedFile);
         const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
         if (uploadRes.status === 413) {
           alert('حجم تصویر خیلی بزرگ است. لطفاً عکس کوچکتری انتخاب کنید (حداکثر 8MB).');

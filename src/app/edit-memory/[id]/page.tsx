@@ -70,18 +70,37 @@ export default function EditMemoryPage() {
     try {
       let url = imageUrl;
       if (!url && selectedFile) {
-        // upload new file if chosen
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(selectedFile);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (err) => reject(err);
-        });
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: base64 }),
-        });
+        // Compress & upload new file if chosen (match add-memory behavior)
+        const compressIfNeeded = async (file: File): Promise<File> => {
+          const MAX_DIRECT_BYTES = 4 * 1024 * 1024; // 4MB threshold before compression
+          if (file.size <= MAX_DIRECT_BYTES) return file;
+          const bitmap = await createImageBitmap(file);
+          const MAX_W = 1600;
+          const MAX_H = 1600;
+          let { width, height } = bitmap;
+          const scale = Math.min(1, MAX_W / width, MAX_H / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return file;
+          ctx.drawImage(bitmap, 0, 0, width, height);
+          const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(b => resolve(b), 'image/jpeg', 0.82);
+          });
+          if (!blob) return file;
+          if (blob.size >= file.size) return file;
+          return new File([blob], file.name.replace(/\.[a-zA-Z]+$/, '.jpg'), { type: 'image/jpeg' });
+        };
+        const processedFile = await compressIfNeeded(selectedFile);
+        const fd = new FormData();
+        fd.append('file', processedFile);
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: fd });
+        if (uploadRes.status === 413) {
+          throw new Error('حجم تصویر خیلی بزرگ است. لطفاً عکس کوچکتری (زیر 8MB) انتخاب کنید.');
+        }
         const uploadJson = await uploadRes.json();
         if (!uploadRes.ok) throw new Error(uploadJson.error || 'Upload failed');
         url = uploadJson.url as string;
@@ -110,6 +129,26 @@ export default function EditMemoryPage() {
       setIsSaving(false);
     }
   };
+
+  // Jalali (Shamsi) date conversion (same logic as add-memory)
+  const toJalali = (isoDate: string) => {
+    if (!isoDate) return null;
+    const [gyStr, gmStr, gdStr] = isoDate.split('-');
+    const gy = parseInt(gyStr, 10); const gm = parseInt(gmStr, 10); const gd = parseInt(gdStr, 10);
+    if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return null;
+    const g_d_m = [0,31, (gy%4===0 && gy%100!==0) || (gy%400===0) ? 29:28,31,30,31,30,31,31,30,31,30,31];
+    const gy2 = gy-1600 + 1; const gm2 = gm-1; const gd2 = gd-1;
+    let g_day_no = 365*gy2 + Math.floor((gy2+3)/4) - Math.floor((gy2+99)/100) + Math.floor((gy2+399)/400);
+    for (let i=0;i<gm2;++i) g_day_no += g_d_m[i+1]; g_day_no += gd2;
+    let j_day_no = g_day_no - 79; const j_np = Math.floor(j_day_no / 12053); j_day_no = j_day_no % 12053;
+    let jy = 979 + 33*j_np + 4*Math.floor(j_day_no/1461); j_day_no %= 1461;
+    if (j_day_no >= 366) { jy += Math.floor((j_day_no-366)/365); j_day_no = (j_day_no-366)%365; }
+    const jmDays = [31,31,31,31,31,31,30,30,30,30,30,29]; let jm = 0;
+    for (; jm < 11 && j_day_no >= jmDays[jm]; ++jm) j_day_no -= jmDays[jm];
+    const jd = j_day_no + 1; const monthsFa = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+    const monthName = monthsFa[jm]; return { jy, jm: jm+1, jd, formatted: `${jd} ${monthName} ${jy}` };
+  };
+  const jalali = toJalali(date);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,16 +216,19 @@ export default function EditMemoryPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t('titleLabel')} *</label>
-                  <input className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={title} onChange={e=>setTitle(e.target.value)} required />
+                  <input className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900 placeholder-gray-500" placeholder={t('titleLabel')} value={title} onChange={e=>setTitle(e.target.value)} required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{t('dateLabel')}</label>
-                  <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={date} onChange={e=>setDate(e.target.value)} />
+                  <input type="date" className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900" value={date} onChange={e=>setDate(e.target.value)} />
+                  {jalali && (
+                    <p className="mt-1 text-xs text-gray-600 rtl-num" dir="rtl">تاریخ شمسی: <span className="font-medium">{jalali.formatted}</span></p>
+                  )}
                 </div>
               </div>
               <div className="mt-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('descriptionLabel')}</label>
-                <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" value={description} onChange={e=>setDescription(e.target.value)} />
+                <label className="block text-sm font-medium text-gray-800 mb-2">{t('descriptionLabel')}</label>
+                <textarea rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-gray-900" value={description} onChange={e=>setDescription(e.target.value)} />
               </div>
             </div>
 
