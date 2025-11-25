@@ -180,6 +180,45 @@ export default function AddMemory() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Convert selected Gregorian date (YYYY-MM-DD) to Jalali (Shamsi)
+  const toJalali = (isoDate: string) => {
+    if (!isoDate) return null;
+    const [gyStr, gmStr, gdStr] = isoDate.split('-');
+    const gy = parseInt(gyStr, 10);
+    const gm = parseInt(gmStr, 10);
+    const gd = parseInt(gdStr, 10);
+    if (isNaN(gy) || isNaN(gm) || isNaN(gd)) return null;
+    // Algorithm: https://en.wikipedia.org/wiki/Jalali_calendar#Converting_Jalali_and_Gregorian_dates
+    const g_d_m = [0,31, (gy%4===0 && gy%100!==0) || (gy%400===0) ? 29:28,31,30,31,30,31,31,30,31,30,31];
+    const gy2 = gy-1600 + 1;
+    const gm2 = gm-1;
+    const gd2 = gd-1;
+    let g_day_no = 365*gy2 + Math.floor((gy2+3)/4) - Math.floor((gy2+99)/100) + Math.floor((gy2+399)/400);
+    for (let i=0;i<gm2;++i) g_day_no += g_d_m[i+1];
+    g_day_no += gd2;
+    let j_day_no = g_day_no - 79;
+    const j_np = Math.floor(j_day_no / 12053); // 12053 = 33*365 + 8 leap days
+    j_day_no = j_day_no % 12053;
+    let jy = 979 + 33*j_np + 4*Math.floor(j_day_no/1461);
+    j_day_no %= 1461;
+    if (j_day_no >= 366) {
+      jy += Math.floor((j_day_no-366)/365);
+      j_day_no = (j_day_no-366)%365;
+    }
+    const jmDays = [31,31,31,31,31,31,30,30,30,30,30,29];
+    let jm = 0;
+    for (; jm < 11 && j_day_no >= jmDays[jm]; ++jm) {
+      j_day_no -= jmDays[jm];
+    }
+    const jd = j_day_no + 1;
+    const monthsFa = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+    const monthName = monthsFa[jm];
+    const pad = (n:number) => n.toString();
+    return { jy, jm: jm+1, jd, formatted: `${pad(jd)} ${monthName} ${jy}` };
+  };
+
+  const jalali = toJalali(formData.date);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {isSubmitting && typeof window !== 'undefined' && createPortal(
@@ -294,6 +333,11 @@ export default function AddMemory() {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   />
+                  {jalali && (
+                    <p className="mt-1 text-xs text-gray-600 rtl-num" dir="rtl">
+                      تاریخ شمسی: <span className="font-medium">{jalali.formatted}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 
