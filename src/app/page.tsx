@@ -74,6 +74,7 @@ export default function Home() {
   // Mobile UI states
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showMobileRecent, setShowMobileRecent] = useState(true);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -597,6 +598,57 @@ export default function Home() {
       <div className="pointer-events-auto absolute top-16 right-3 z-[1000]">
         <CoinsBadge rect />
       </div>
+
+      {/* Mobile: Recent items bottom sheet */}
+      {recent.length > 0 && (
+        <div className="md:hidden pointer-events-none absolute left-0 right-0 bottom-20 px-3 z-[1000] flex justify-start">
+          <div className="pointer-events-auto w-full max-w-[340px] mr-16 bg-white/95 backdrop-blur rounded-t-lg shadow-lg overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm font-semibold text-gray-800">{t('recentLocations')}</span>
+              <button
+                onClick={() => setShowMobileRecent(s => !s)}
+                aria-pressed={showMobileRecent}
+                className={`h-8 w-8 rounded-md flex items-center justify-center ${showMobileRecent ? 'bg-gray-100 text-gray-700' : 'bg-white text-gray-800'} shadow`}
+                title={showMobileRecent ? 'جمع‌کردن' : 'بازکردن'}
+                aria-label={showMobileRecent ? 'Collapse recent' : 'Expand recent'}
+              >
+                {showMobileRecent ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5"><path d="M6 15l6-6 6 6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                )}
+              </button>
+            </div>
+            {showMobileRecent && (
+              <div className="max-h-[40vh] overflow-auto">
+                {recent.map((m) => (
+                  <button
+                    key={m.id}
+                    onClick={() => {
+                      try {
+                        if (mapInstance) {
+                          mapInstance.flyTo([m.latitude, m.longitude] as [number, number], Math.max(mapInstance.getZoom?.() ?? 2, 14), { duration: 0.9 });
+                        }
+                      } catch {}
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-50 flex items-center gap-2"
+                    title={m.title}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.imageUrl} alt={m.title || 'memory'} className="h-10 w-14 object-cover rounded" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 line-clamp-1">{m.title || 'Memory'}</div>
+                      <div className="text-[11px] text-gray-600 line-clamp-1 rtl-num" suppressHydrationWarning>
+                        {new Intl.DateTimeFormat('fa-IR', { timeZone: 'UTC' }).format(new Date(m.memoryDate || m.createdAt))}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Bottom overlay hint */}
       <div className="pointer-events-none absolute left-0 right-0 bottom-0 p-3 z-[1000]">
