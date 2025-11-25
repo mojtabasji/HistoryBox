@@ -86,7 +86,7 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
           onChange={onChange}
           onFocus={() => setOpen(true)}
           placeholder={placeholder}
-          className="w-full pr-9 pl-3 h-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+          className="w-full pr-9 pl-3 h-8 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 placeholder-gray-500"
         />
         {q && (
           <button
@@ -111,9 +111,9 @@ export default function SearchControl({ map, className = '', placeholder = 'Sear
             <button
               key={`${r.display_name}-${i}`}
               onClick={() => onPick(r)}
-              className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
+              className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50 text-gray-800"
             >
-              {r.display_name}
+              <span className="block truncate leading-snug">{r.display_name}</span>
             </button>
           ))}
         </div>
