@@ -6,7 +6,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function unauthorized() {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Use 403 so SuperTokens session interceptors don't treat this as
+  // an expired session and auto-refresh/retry in a loop.
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
 function ensureAdmin(req: NextRequest) {
