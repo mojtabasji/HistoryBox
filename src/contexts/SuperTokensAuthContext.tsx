@@ -86,6 +86,13 @@ const SuperTokensAuthProviderInner: React.FC<{ children: React.ReactNode }> = ({
       if (session.loading) return;
       if (!session.doesSessionExist) return;
       if (user && user.phoneNumber) return; // already have
+      // Global guard to avoid repeated /api/auth/me calls across remounts
+      // (e.g., React StrictMode double-invocation or HMR in dev).
+      if (typeof window !== 'undefined') {
+        const g = window as unknown as { __hbPhoneHydrated?: boolean };
+        if (g.__hbPhoneHydrated) return;
+        g.__hbPhoneHydrated = true;
+      }
       try {
         const res = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!res.ok) return;
@@ -121,11 +128,20 @@ const SuperTokensAuthProviderInner: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     if (session.loading) return;
-    if ("doesSessionExist" in session && session.doesSessionExist) {
-      void fetchCoins();
-    } else {
+    if (!('doesSessionExist' in session) || !session.doesSessionExist) {
       setCoins(null);
+      return;
     }
+
+    // Global guard to ensure we only auto-fetch coins once per tab
+    // (subsequent updates should come from explicit refresh/broadcasts).
+    if (typeof window !== 'undefined') {
+      const g = window as unknown as { __hbCoinsFetchedOnce?: boolean };
+      if (g.__hbCoinsFetchedOnce) return;
+      g.__hbCoinsFetchedOnce = true;
+    }
+
+    void fetchCoins();
   }, [session, fetchCoins]);
 
   // BroadcastChannel to sync coin updates across tabs (fallback to localStorage event)
