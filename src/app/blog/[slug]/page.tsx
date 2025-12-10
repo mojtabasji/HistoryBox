@@ -1,23 +1,43 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import prisma from '@/lib/prisma';
 import { buildBlogPostingSchema } from '@/lib/seoSchemas';
+import { t } from '@/lib/i18n';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function getBlogBySlug(slug: string) {
   if (!slug) return null;
-  return prisma.blog.findUnique({
-    where: { slug },
+
+  // Handle potential URL-encoded or Unicode slug differences by trying both
+  // the raw value and a decoded variant.
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    decoded = slug;
+  }
+
+  const blog = await prisma.blog.findFirst({
+    where: {
+      OR: [
+        { slug },
+        decoded !== slug ? { slug: decoded } : { slug },
+      ],
+    },
     include: { region: true },
   });
+
+  return blog;
 }
 
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
-  const blog = await getBlogBySlug(params.slug);
+  const { slug } = await params;
+  const blog = await getBlogBySlug(slug);
   if (!blog) return {};
 
   const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
@@ -41,48 +61,80 @@ export async function generateMetadata(
 }
 
 interface BlogPageProps {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default async function BlogPage({ params }: BlogPageProps) {
-  const blog = await getBlogBySlug(params.slug);
+  const { slug } = await params;
+  const blog = await getBlogBySlug(slug);
   if (!blog) notFound();
 
   const schema = buildBlogPostingSchema(blog, blog.region || undefined);
 
+  const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
+  const readMinutes = Math.max(1, Math.round(plainText.split(/\s+/).filter(Boolean).length / 200));
+
   return (
-    <main className="min-h-screen bg-white px-4 py-8">
-      <article className="max-w-3xl mx-auto prose prose-sm sm:prose lg:prose-lg rtl text-right">
-        <header>
-          <h1>{blog.title}</h1>
-          <p className="text-xs text-gray-400 rtl-num">
-            {new Date(blog.createdAt).toLocaleDateString('fa-IR')}
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow relative z-[1000]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold hb-brand font-fa">{t('historyBox')}</h1>
+            <span className="hidden sm:inline-block text-xs text-gray-500">/ Blog</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Link href="/blog" className="hb-btn-primary px-3 py-1.5 rounded-md">
+              بازگشت به وبلاگ
+            </Link>
+            <Link href="/" className="hb-btn-primary px-3 py-1.5 rounded-md hidden sm:inline-flex">
+              {t('viewMap')}
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-4xl mx-auto py-8 sm:px-6 lg:px-8">
+        <article className="bg-white rounded-2xl shadow-md overflow-hidden">
           {blog.coverImageUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={blog.coverImageUrl}
               alt={blog.title}
-              className="mt-4 rounded-lg max-h-80 w-full object-cover"
+              className="w-full max-h-[420px] object-cover"
               loading="lazy"
             />
           )}
-        </header>
 
-        <section
-          className="mt-6"
-          // eslint-disable-next-line react/no-danger
-          dangerouslySetInnerHTML={{ __html: blog.body }}
-        />
+          <div className="px-5 sm:px-8 py-6 sm:py-8">
+            <header className="mb-6 border-b border-gray-100 pb-4">
+              <p className="text-xs text-indigo-600 font-semibold rtl-num mb-2">
+                {new Date(blog.createdAt).toLocaleDateString('fa-IR')}{' • '}
+                {readMinutes} دقیقه مطالعه
+              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-snug">
+                {blog.title}
+              </h1>
+              {plainText && (
+                <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 sm:line-clamp-none">
+                  {plainText.slice(0, 220)}{plainText.length > 220 ? '…' : ''}
+                </p>
+              )}
+            </header>
 
-        {schema && (
-          <script
-            type="application/ld+json"
-            // eslint-disable-next-line react/no-danger
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-          />
-        )}
-      </article>
-    </main>
+            <section
+              className="prose prose-sm sm:prose lg:prose-lg rtl text-right max-w-none"
+              dangerouslySetInnerHTML={{ __html: blog.body }}
+            />
+          </div>
+
+          {schema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+            />
+          )}
+        </article>
+      </main>
+    </div>
   );
 }
