@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ImageUpload from '@/components/ImageUpload';
 
 const STORAGE_KEY = 'hb_admin_api_key';
 
@@ -263,6 +264,17 @@ export default function AdminApp() {
                                     onChange={(e) => setForm((f) => ({ ...f, coverImageUrl: e.target.value }))}
                                     className="w-full border rounded px-3 py-2"
                                     placeholder="https://..."
+                                />
+                                <p className="mt-1 text-[11px] text-gray-500">
+                                    می‌توانید آدرس تصویر را اینجا وارد کنید یا در بخش زیر یک تصویر جدید آپلود کنید.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block mb-1">آپلود تصویر کاور</label>
+                                <ImageUpload
+                                    currentImage={form.coverImageUrl || undefined}
+                                    onImageUpload={(url) => setForm((f) => ({ ...f, coverImageUrl: url }))}
+                                    className="mt-1"
                                 />
                             </div>
                             <div>
