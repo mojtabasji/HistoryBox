@@ -37,22 +37,26 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
   const { slug } = await params;
-  const blog = await getBlogBySlug(slug);
-  if (!blog) return {};
+  // Avoid extra DB query here to reduce connection pressure.
+  // Use a generic, slug-based metadata instead.
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    decoded = slug;
+  }
 
-  const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
-  const description = plainText.length > 200 ? `${plainText.slice(0, 200)}…` : plainText || undefined;
-  const url = `/blog/${blog.slug}`;
+  const humanTitle = decoded.replace(/[-_]+/g, ' ').trim() || 'HistoryBox Blog';
+  const url = `/blog/${slug}`;
 
   return {
-    title: blog.title,
-    description,
+    title: humanTitle,
+    description: `یک مطلب از وبلاگ HistoryBox درباره ${humanTitle}`,
     openGraph: {
-      title: blog.title,
-      description,
+      title: humanTitle,
+      description: `یک مطلب از وبلاگ HistoryBox درباره ${humanTitle}`,
       url,
       type: 'article',
-      images: blog.coverImageUrl ? [blog.coverImageUrl] : undefined,
     },
     alternates: {
       canonical: url,
@@ -106,18 +110,54 @@ export default async function BlogPage({ params }: BlogPageProps) {
           )}
 
           <div className="px-5 sm:px-8 py-6 sm:py-8">
-            <header className="mb-6 border-b border-gray-100 pb-4">
-              <p className="text-xs text-indigo-600 font-semibold rtl-num mb-2">
-                {new Date(blog.createdAt).toLocaleDateString('fa-IR')}{' • '}
-                {readMinutes} دقیقه مطالعه
-              </p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-snug">
-                {blog.title}
-              </h1>
-              {plainText && (
-                <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 sm:line-clamp-none">
-                  {plainText.slice(0, 220)}{plainText.length > 220 ? '…' : ''}
+            <header className="mb-6 border-b border-gray-100 pb-4 flex flex-col gap-3">
+              <div>
+                <p className="text-xs text-indigo-600 font-semibold rtl-num mb-2">
+                  {new Date(blog.createdAt).toLocaleDateString('fa-IR')}{' • '}
+                  {readMinutes} دقیقه مطالعه
                 </p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-snug">
+                  {blog.title}
+                </h1>
+                {plainText && (
+                  <p className="text-sm text-gray-600 leading-relaxed line-clamp-3 sm:line-clamp-none">
+                    {plainText.slice(0, 220)}{plainText.length > 220 ? '…' : ''}
+                  </p>
+                )}
+              </div>
+
+              {blog.region ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 rtl-num">
+                  <span className="text-[11px] text-gray-500">
+                    منطقه مرتبط:
+                    {' '}
+                    <span className="font-medium">{blog.region.hash ?? blog.region.geohash}</span>
+                  </span>
+                  <Link
+                    href={`/region/${encodeURIComponent(blog.region.hash ?? blog.region.geohash)}`}
+                    className="hb-btn-primary px-3 py-1.5 rounded-md text-xs"
+                  >
+                    مشاهده این منطقه روی نقشه
+                  </Link>
+                </div>
+              ) : (blog.latitude != null && blog.longitude != null) && (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-600 rtl-num">
+                  <span className="text-[11px] text-gray-500">
+                    موقعیت مکانی:
+                    {' '}
+                    <span className="font-medium rtl-num">
+                      {blog.latitude.toFixed(4)}
+                      {', '}
+                      {blog.longitude.toFixed(4)}
+                    </span>
+                  </span>
+                  <Link
+                    href={`/?lat=${encodeURIComponent(String(blog.latitude))}&lng=${encodeURIComponent(String(blog.longitude))}`}
+                    className="hb-btn-primary px-3 py-1.5 rounded-md text-xs"
+                  >
+                    مشاهده این نقطه روی نقشه
+                  </Link>
+                </div>
               )}
             </header>
 

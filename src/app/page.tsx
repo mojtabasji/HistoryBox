@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/SuperTokensAuthContext';
 import Link from 'next/link';
 import type { Icon, Map as LeafletMapType } from 'leaflet';
@@ -54,6 +55,7 @@ type RecentMemory = {
 
 export default function Home() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
   const [regions, setRegions] = useState<RegionMarker[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,6 +77,17 @@ export default function Home() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [showMobileRecent, setShowMobileRecent] = useState(true);
+
+  const initialView = useMemo<{ center: [number, number]; zoom: number }>(() => {
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
+    const lat = latParam != null ? Number(latParam) : NaN;
+    const lng = lngParam != null ? Number(lngParam) : NaN;
+    if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+      return { center: [lat, lng], zoom: 12 };
+    }
+    return { center: [20, 0], zoom: 2 };
+  }, [searchParams]);
 
   // Avoid SSR/client hydration mismatch by rendering map only after mount
   useEffect(() => {
@@ -234,8 +247,8 @@ export default function Home() {
     <div className="relative w-full h-[100dvh]">
       {/* Full-screen Map */}
       <LeafletMap
-        center={[20, 0]}
-        zoom={2}
+        center={initialView.center}
+        zoom={initialView.zoom}
         minZoom={2}
         maxZoom={19}
         style={mapStyle}

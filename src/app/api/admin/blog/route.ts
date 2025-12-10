@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
       coverImageUrl,
       regionHash,
       regionId,
+      latitude,
+      longitude,
     } = body as {
       title?: string;
       slug?: string;
@@ -78,6 +80,8 @@ export async function POST(req: NextRequest) {
       coverImageUrl?: string | null;
       regionHash?: string | null;
       regionId?: number | null;
+      latitude?: number | null;
+      longitude?: number | null;
     };
 
     if (!title || !content) {
