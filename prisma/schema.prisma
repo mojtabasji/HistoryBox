@@ -14,30 +14,31 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  username    String?  @unique
-  email       String?  @unique
-  phoneNumber String?  @unique
+  id          Int                @id @default(autoincrement())
+  username    String?            @unique
+  email       String?            @unique
+  phoneNumber String?            @unique
   posts       Post[]
-  coins       Int      @default(20)
+  coins       Int                @default(20)
   unlocks     UserRegionUnlock[]
-  createdAt   DateTime @default(now())
+  createdAt   DateTime           @default(now())
 }
 
 model Region {
-  id        Int    @id @default(autoincrement())
-  geohash   String @unique
-  postCount Int    @default(0)
+  id        Int                @id @default(autoincrement())
+  geohash   String             @unique
+  postCount Int                @default(0)
   posts     Post[]
-  hash      String @unique
+  blogs     Blog[]
+  hash      String             @unique
   unlocks   UserRegionUnlock[]
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
-  user        User     @relation(fields: [userId], references: [id])
+  id          Int       @id @default(autoincrement())
+  user        User      @relation(fields: [userId], references: [id])
   userId      Int
-  region      Region   @relation(fields: [regionId], references: [id])
+  region      Region    @relation(fields: [regionId], references: [id])
   regionId    Int
   title       String
   description String?
@@ -49,7 +50,7 @@ model Post {
   memoryDate  DateTime?
   /// Optional string copy of region hash for convenience; relation is via regionId
   regionHash  String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 }
 
 model UserRegionUnlock {
@@ -65,3 +66,14 @@ model UserRegionUnlock {
   @@unique([userId, regionId])
 }
 
+model Blog {
+  id            Int      @id @default(autoincrement())
+  title         String
+  slug          String   @unique
+  body          String
+  coverImageUrl String?
+  region        Region?  @relation(fields: [regionId], references: [id])
+  regionId      Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
