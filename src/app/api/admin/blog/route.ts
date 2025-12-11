@@ -102,6 +102,8 @@ export async function POST(req: NextRequest) {
         body: content,
         coverImageUrl: coverImageUrl ?? null,
         regionId: resolvedRegionId ?? undefined,
+        latitude: latitude,
+        longitude: longitude
       },
     });
 
