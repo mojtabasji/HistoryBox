@@ -29,7 +29,7 @@ export function buildItemPlaceSchema(region: Region | null | undefined) {
   };
 }
 
-export function buildBlogPostingSchema(blog: Blog, region?: Region | null) {
+export function buildBlogPostingSchema(blog: Blog & { tags?: string[] }, region?: Region | null) {
   const locationName = region?.geohash ?? region?.hash ?? undefined;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://historybox.app';
   return {
@@ -57,7 +57,7 @@ export function buildBlogPostingSchema(blog: Blog, region?: Region | null) {
       '@id': `${baseUrl}/blog/${blog.slug}`,
     },
     image: blog.coverImageUrl ?? undefined,
-    keywords: (blog as any).tags && (blog as any).tags.length ? (blog as any).tags : undefined,
+    keywords: blog.tags && blog.tags.length ? blog.tags : undefined,
     articleBody: undefined, // We avoid duplicating full body here
     locationCreated: locationName
       ? {

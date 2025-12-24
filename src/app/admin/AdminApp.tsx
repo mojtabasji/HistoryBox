@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ImageUpload from '@/components/ImageUpload';
 
 const STORAGE_KEY = 'hb_admin_api_key';
@@ -48,16 +48,7 @@ export default function AdminApp() {
     const [isSavingKey, setIsSavingKey] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (typeof window === 'undefined') return;
-        const stored = window.localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-            setApiKey(stored);
-            void fetchPosts(stored);
-        }
-    }, []);
-
-    async function fetchPosts(key = apiKey) {
+    const fetchPosts = useCallback(async (key = apiKey) => {
         if (!key) return;
         setLoading(true);
         setError(null);
@@ -75,7 +66,16 @@ export default function AdminApp() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [apiKey]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const stored = window.localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+            setApiKey(stored);
+            void fetchPosts(stored);
+        }
+    }, [fetchPosts]);
 
     function handleSaveKey() {
         if (!apiKey) return;

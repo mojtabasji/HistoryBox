@@ -1,6 +1,5 @@
 "use client";
 import React from 'react';
-import { t } from '@/lib/i18n';
 import Link from 'next/link';
 
 type VerifyResult = {

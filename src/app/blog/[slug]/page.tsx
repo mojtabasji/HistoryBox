@@ -46,13 +46,16 @@ export async function generateMetadata(
     };
   }
 
+  type BlogWithTags = typeof blog & { tags?: string[] | null };
+  const blogWithTags = blog as BlogWithTags;
+
   // Extract plain text for description
   const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
   const excerpt = plainText.slice(0, 160);
   const description = excerpt.length < plainText.length ? `${excerpt}...` : excerpt;
 
-  const url = `/blog/${slug}`;
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://historybox.app';
+  const url = `${baseUrl}/blog/${slug}`;
 
   return {
     title: blog.title,
@@ -64,7 +67,7 @@ export async function generateMetadata(
       'خاطرات',
       'سفر',
       'تاریخ',
-      ...(((blog as any).tags as string[] | undefined) ?? []),
+      ...(blogWithTags.tags ?? []),
     ],
     authors: [{ name: 'HistoryBox' }],
     openGraph: {
@@ -101,6 +104,9 @@ export default async function BlogPage({ params }: BlogPageProps) {
   const { slug } = await params;
   const blog = await getBlogBySlug(slug);
   if (!blog) notFound();
+
+  type BlogWithTags = typeof blog & { tags?: string[] | null };
+  const blogWithTags = blog as BlogWithTags;
 
   const schema = buildBlogPostingSchema(blog, blog.region || undefined);
 
@@ -192,10 +198,10 @@ export default async function BlogPage({ params }: BlogPageProps) {
                 </div>
               )}
 
-              {Array.isArray((blog as any).tags) && (blog as any).tags.length > 0 && (
+              {Array.isArray(blogWithTags.tags) && blogWithTags.tags.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 text-xs mt-2">
                   <span className="text-[11px] text-gray-500">برچسب‌ها:</span>
-                  {(blog as any).tags.map((tag: string) => (
+                  {blogWithTags.tags.map((tag) => (
                     <Link
                       key={tag}
                       href={`/blog/tag/${encodeURIComponent(tag)}`}

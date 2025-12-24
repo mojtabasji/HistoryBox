@@ -44,6 +44,8 @@ function estimateReadMinutesFromHtml(html: string): number {
   return minutes;
 }
 
+type Taggable = { tags?: string[] | null };
+
 export default async function BlogIndexPage() {
   const posts = await prisma.blog.findMany({
     orderBy: { createdAt: 'desc' },
@@ -120,15 +122,16 @@ export default async function BlogIndexPage() {
                         <p className="text-sm text-gray-700 line-clamp-3">
                           {getExcerpt(featured.body, 220)}
                         </p>
-                        {Array.isArray((featured as any).tags) && (featured as any).tags.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1 text-[11px] text-indigo-700">
-                            {(featured as any).tags.slice(0, 3).map((tag: string) => (
-                              <span key={tag} className="px-2 py-0.5 rounded-full bg-indigo-50">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                        {Array.isArray((featured as Taggable).tags) &&
+                          (featured as Taggable).tags!.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1 text-[11px] text-indigo-700">
+                              {(featured as Taggable).tags!.slice(0, 3).map((tag: string) => (
+                                <span key={tag} className="px-2 py-0.5 rounded-full bg-indigo-50">
+                                  #{tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                       </div>
                       <div className="mt-4 text-xs text-indigo-600 font-medium">
                         ادامه مطلب →
@@ -170,9 +173,9 @@ export default async function BlogIndexPage() {
                               <h4 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-indigo-600">
                                 {post.title}
                               </h4>
-                              {Array.isArray((post as any).tags) && (post as any).tags.length > 0 && (
+                              {((post as Taggable).tags ?? []).length > 0 && (
                                 <div className="mt-0.5 flex flex-wrap gap-1 text-[10px] text-indigo-700">
-                                  {(post as any).tags.slice(0, 2).map((tag: string) => (
+                                  {((post as Taggable).tags ?? []).slice(0, 2).map((tag: string) => (
                                     <span key={tag} className="px-1.5 py-0.5 rounded-full bg-indigo-50">
                                       #{tag}
                                     </span>
@@ -220,9 +223,9 @@ export default async function BlogIndexPage() {
                           <p className="text-xs text-gray-600 line-clamp-2 flex-1">
                             {getExcerpt(post.body, 140)}
                           </p>
-                          {Array.isArray((post as any).tags) && (post as any).tags.length > 0 && (
+                          {((post as Taggable).tags ?? []).length > 0 && (
                             <div className="mt-1 flex flex-wrap gap-1 text-[10px] text-indigo-700">
-                              {(post as any).tags.slice(0, 2).map((tag: string) => (
+                              {((post as Taggable).tags ?? []).slice(0, 2).map((tag: string) => (
                                 <span key={tag} className="px-1.5 py-0.5 rounded-full bg-indigo-50">
                                   #{tag}
                                 </span>
