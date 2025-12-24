@@ -72,6 +72,7 @@ model Blog {
   slug          String   @unique
   body          String
   coverImageUrl String?
+  tags          String[] @default([])
   latitude      Float?
   longitude     Float?
   region        Region?  @relation(fields: [regionId], references: [id])

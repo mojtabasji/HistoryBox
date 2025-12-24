@@ -57,7 +57,15 @@ export async function generateMetadata(
   return {
     title: blog.title,
     description,
-    keywords: [blog.title, 'HistoryBox', 'وبلاگ', 'خاطرات', 'سفر', 'تاریخ'],
+    keywords: [
+      blog.title,
+      'HistoryBox',
+      'وبلاگ',
+      'خاطرات',
+      'سفر',
+      'تاریخ',
+      ...(((blog as any).tags as string[] | undefined) ?? []),
+    ],
     authors: [{ name: 'HistoryBox' }],
     openGraph: {
       title: blog.title,
@@ -181,6 +189,21 @@ export default async function BlogPage({ params }: BlogPageProps) {
                   >
                     مشاهده این نقطه روی نقشه
                   </Link>
+                </div>
+              )}
+
+              {Array.isArray((blog as any).tags) && (blog as any).tags.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 text-xs mt-2">
+                  <span className="text-[11px] text-gray-500">برچسب‌ها:</span>
+                  {(blog as any).tags.map((tag: string) => (
+                    <Link
+                      key={tag}
+                      href={`/blog/tag/${encodeURIComponent(tag)}`}
+                      className="px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                    >
+                      #{tag}
+                    </Link>
+                  ))}
                 </div>
               )}
             </header>

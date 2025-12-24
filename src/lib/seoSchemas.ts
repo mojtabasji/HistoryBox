@@ -57,6 +57,7 @@ export function buildBlogPostingSchema(blog: Blog, region?: Region | null) {
       '@id': `${baseUrl}/blog/${blog.slug}`,
     },
     image: blog.coverImageUrl ?? undefined,
+    keywords: (blog as any).tags && (blog as any).tags.length ? (blog as any).tags : undefined,
     articleBody: undefined, // We avoid duplicating full body here
     locationCreated: locationName
       ? {

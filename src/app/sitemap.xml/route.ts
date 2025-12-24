@@ -13,9 +13,10 @@ function getBaseUrl(req: NextRequest): string {
 export async function GET(req: NextRequest) {
   const baseUrl = getBaseUrl(req);
 
-  const [posts, blogs] = await Promise.all([
+  const [posts, blogs, tagSources] = await Promise.all([
     prisma.post.findMany({ select: { id: true, createdAt: true } }),
     prisma.blog.findMany({ select: { slug: true, updatedAt: true } }),
+    prisma.blog.findMany({ select: { tags: true } }),
   ]);
 
   const urls: string[] = [];
@@ -36,6 +37,23 @@ export async function GET(req: NextRequest) {
     const loc = `${baseUrl}/blog/${blog.slug}`;
     const lastmod = blog.updatedAt.toISOString();
     urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>0.8</priority>\n  </url>`);
+  }
+
+  // Tag pages
+  const tagSet = new Set<string>();
+  for (const row of tagSources) {
+    if (Array.isArray(row.tags)) {
+      for (const tag of row.tags) {
+        const trimmed = String(tag).trim();
+        if (trimmed) tagSet.add(trimmed);
+      }
+    }
+  }
+
+  for (const tag of tagSet) {
+    const loc = `${baseUrl}/blog/tag/${encodeURIComponent(tag)}`;
+    const lastmod = new Date().toISOString();
+    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>0.6</priority>\n  </url>`);
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +

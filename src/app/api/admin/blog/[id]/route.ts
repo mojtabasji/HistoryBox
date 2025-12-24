@@ -58,6 +58,7 @@ export async function PUT(
       regionId,
       latitude,
       longitude,
+      tags,
     } = body as {
       title?: string;
       slug?: string;
@@ -67,6 +68,7 @@ export async function PUT(
       regionId?: number | null;
       latitude?: number | null;
       longitude?: number | null;
+      tags?: string[] | string | null;
     };
 
     let newRegionId: number | null | undefined = undefined;
@@ -79,6 +81,16 @@ export async function PUT(
     const latValue = typeof latitude === 'number' ? latitude : null;
     const lngValue = typeof longitude === 'number' ? longitude : null;
 
+    let normalizedTags: string[] | undefined;
+    if (Array.isArray(tags)) {
+      normalizedTags = tags.map((t) => String(t).trim()).filter(Boolean);
+    } else if (typeof tags === 'string') {
+      normalizedTags = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+
     const updated = await prisma.blog.update({
       where: { id },
       data: {
@@ -89,6 +101,7 @@ export async function PUT(
         regionId: newRegionId === null ? undefined : newRegionId,
         latitude: latValue,
         longitude: lngValue,
+        tags: normalizedTags ?? undefined,
       },
     });
 

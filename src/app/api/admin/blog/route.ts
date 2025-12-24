@@ -73,6 +73,7 @@ export async function POST(req: NextRequest) {
       regionId,
       latitude,
       longitude,
+      tags,
     } = body as {
       title?: string;
       slug?: string;
@@ -82,6 +83,7 @@ export async function POST(req: NextRequest) {
       regionId?: number | null;
       latitude?: number | null;
       longitude?: number | null;
+      tags?: string[] | string | null;
     };
 
     if (!title || !content) {
@@ -95,6 +97,16 @@ export async function POST(req: NextRequest) {
       ? regionId
       : await resolveRegionId(regionHash ?? undefined);
 
+    let normalizedTags: string[] | undefined;
+    if (Array.isArray(tags)) {
+      normalizedTags = tags.map((t) => String(t).trim()).filter(Boolean);
+    } else if (typeof tags === 'string') {
+      normalizedTags = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+    }
+
     const created = await prisma.blog.create({
       data: {
         title,
@@ -103,7 +115,8 @@ export async function POST(req: NextRequest) {
         coverImageUrl: coverImageUrl ?? null,
         regionId: resolvedRegionId ?? undefined,
         latitude: latitude,
-        longitude: longitude
+        longitude: longitude,
+        tags: normalizedTags ?? undefined,
       },
     });
 
