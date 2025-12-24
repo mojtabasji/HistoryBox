@@ -31,15 +31,30 @@ export function buildItemPlaceSchema(region: Region | null | undefined) {
 
 export function buildBlogPostingSchema(blog: Blog, region?: Region | null) {
   const locationName = region?.geohash ?? region?.hash ?? undefined;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://historybox.app';
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: blog.title,
     datePublished: blog.createdAt.toISOString(),
     dateModified: blog.updatedAt.toISOString(),
+    author: {
+      '@type': 'Organization',
+      name: 'HistoryBox',
+      url: baseUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'HistoryBox',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/icons/icon-192.png`,
+      },
+    },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `/blog/${blog.slug}`,
+      '@id': `${baseUrl}/blog/${blog.slug}`,
     },
     image: blog.coverImageUrl ?? undefined,
     articleBody: undefined, // We avoid duplicating full body here

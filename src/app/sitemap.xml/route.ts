@@ -20,16 +20,22 @@ export async function GET(req: NextRequest) {
 
   const urls: string[] = [];
 
+  // Add homepage with highest priority
+  urls.push(`  <url>\n    <loc>${baseUrl}</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <priority>1.0</priority>\n  </url>`);
+  
+  // Add blog index page
+  urls.push(`  <url>\n    <loc>${baseUrl}/blog</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n    <priority>0.9</priority>\n  </url>`);
+
   for (const post of posts) {
     const loc = `${baseUrl}/item/${post.id}`;
     const lastmod = post.createdAt.toISOString();
-    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`);
+    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>0.7</priority>\n  </url>`);
   }
 
   for (const blog of blogs) {
     const loc = `${baseUrl}/blog/${blog.slug}`;
     const lastmod = blog.updatedAt.toISOString();
-    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n  </url>`);
+    urls.push(`  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod}</lastmod>\n    <priority>0.8</priority>\n  </url>`);
   }
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n` +

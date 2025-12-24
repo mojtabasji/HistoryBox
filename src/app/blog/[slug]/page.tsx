@@ -37,26 +37,47 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
   const { slug } = await params;
-  // Avoid extra DB query here to reduce connection pressure.
-  // Use a generic, slug-based metadata instead.
-  let decoded = slug;
-  try {
-    decoded = decodeURIComponent(slug);
-  } catch {
-    decoded = slug;
+  const blog = await getBlogBySlug(slug);
+
+  if (!blog) {
+    return {
+      title: 'مطلب یافت نشد',
+      description: 'این مطلب وجود ندارد یا حذف شده است.',
+    };
   }
 
-  const humanTitle = decoded.replace(/[-_]+/g, ' ').trim() || 'HistoryBox Blog';
+  // Extract plain text for description
+  const plainText = blog.body.replace(/<[^>]*>/g, '').trim();
+  const excerpt = plainText.slice(0, 160);
+  const description = excerpt.length < plainText.length ? `${excerpt}...` : excerpt;
+
   const url = `/blog/${slug}`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://historybox.app';
 
   return {
-    title: humanTitle,
-    description: `یک مطلب از وبلاگ HistoryBox درباره ${humanTitle}`,
+    title: blog.title,
+    description,
+    keywords: [blog.title, 'HistoryBox', 'وبلاگ', 'خاطرات', 'سفر', 'تاریخ'],
+    authors: [{ name: 'HistoryBox' }],
     openGraph: {
-      title: humanTitle,
-      description: `یک مطلب از وبلاگ HistoryBox درباره ${humanTitle}`,
+      title: blog.title,
+      description,
       url,
       type: 'article',
+      publishedTime: blog.createdAt.toISOString(),
+      modifiedTime: blog.updatedAt.toISOString(),
+      images: blog.coverImageUrl ? [{ 
+        url: blog.coverImageUrl,
+        width: 1200,
+        height: 630,
+        alt: `تصویر شاخص ${blog.title}`,
+      }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: blog.title,
+      description,
+      images: blog.coverImageUrl ? [blog.coverImageUrl] : undefined,
     },
     alternates: {
       canonical: url,
@@ -103,9 +124,12 @@ export default async function BlogPage({ params }: BlogPageProps) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={blog.coverImageUrl}
-              alt={blog.title}
+              alt={`تصویر شاخص مقاله ${blog.title}`}
+              title={blog.title}
               className="w-full max-h-[420px] object-cover"
               loading="lazy"
+              width="1200"
+              height="630"
             />
           )}
 

@@ -16,8 +16,40 @@ const rubik = Rubik({
 });
 
 export const metadata: Metadata = {
-  title: "History Box",
-  description: "Your personal history tracking application",
+  title: {
+    default: "HistoryBox - خاطرات شما روی نقشه جهان",
+    template: "%s | HistoryBox"
+  },
+  description: "HistoryBox - پلتفرم اشتراک‌گذاری و کشف خاطرات تاریخی و فرهنگی با موقعیت جغرافیایی. عکس‌ها و داستان‌های خود را روی نقشه جهان به اشتراک بگذارید.",
+  keywords: ["HistoryBox", "خاطرات", "نقشه", "عکس", "تاریخ", "فرهنگ", "مکان", "سفر", "گردشگری"],
+  authors: [{ name: "HistoryBox Team" }],
+  creator: "HistoryBox",
+  publisher: "HistoryBox",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://historybox.app'),
+  openGraph: {
+    type: "website",
+    locale: "fa_IR",
+    url: "/",
+    siteName: "HistoryBox",
+    title: "HistoryBox - خاطرات شما روی نقشه جهان",
+    description: "پلتفرم اشتراک‌گذاری و کشف خاطرات تاریخی و فرهنگی با موقعیت جغرافیایی",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HistoryBox",
+    description: "پلتفرم اشتراک‌گذاری خاطرات روی نقشه جهان",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 // Prevent pinch/gesture zoom on mobile as requested

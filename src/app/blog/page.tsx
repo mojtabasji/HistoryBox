@@ -8,13 +8,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'HistoryBox Blog',
-  description: 'Stories and guides from HistoryBox locations and memories.',
+  title: 'وبلاگ HistoryBox - داستان‌ها و خاطرات تاریخی',
+  description: 'مقالات، داستان‌ها و راهنماهای سفر از مکان‌های تاریخی و فرهنگی HistoryBox. کشف کنید، بیاموزید و خاطرات خود را به اشتراک بگذارید.',
+  keywords: ['وبلاگ', 'خاطرات', 'تاریخ', 'مکان‌های تاریخی', 'سفر', 'فرهنگ', 'داستان'],
   openGraph: {
-    title: 'HistoryBox Blog',
-    description: 'Stories and guides from HistoryBox locations and memories.',
+    title: 'وبلاگ HistoryBox',
+    description: 'داستان‌ها و راهنماهای سفر از مکان‌های تاریخی و فرهنگی',
     url: '/blog',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'وبلاگ HistoryBox',
+    description: 'داستان‌ها و راهنماهای سفر از مکان‌های تاریخی',
   },
   alternates: {
     canonical: '/blog',
