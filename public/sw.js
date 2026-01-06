@@ -22,13 +22,34 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
-  // Network-first for API & dynamic, cache-first for same-origin static assets
+  const acceptHeader = request.headers.get('accept') || '';
+  const isHtmlNavigation = acceptHeader.includes('text/html');
+  const url = new URL(request.url);
+
+  // Network-first for API requests
   if (request.url.includes('/api/')) {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
     );
     return;
   }
+
+  // Always go to network for sitemap so it reflects latest data.
+  if (url.pathname === '/sitemap.xml') {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  // Always go to network for HTML/navigation requests so dynamic pages
+  // like /blog and blog posts are never served stale from the SW cache.
+  if (isHtmlNavigation) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match(request) || caches.match('/'))
+    );
+    return;
+  }
+
+  // Cache-first for same-origin static assets (JS, CSS, images, etc.)
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
