@@ -111,14 +111,31 @@ npm run test:supertokens   # CLI: GET ${SUPERTOKENS_CONNECTION_URI}/ and assert 
 GET /test                  # Same check over HTTP while the app runs
 ```
 
-`GET /test` (route: `src/app/test/route.ts`, logic: `src/lib/supertokensHealth.ts`) returns JSON:
+`GET /test` (route: `src/app/test/route.ts`, logic: `src/lib/supertokensHealth.ts`) runs two probes and returns JSON:
+
+1. **`hello`** — `GET /` must answer plain `hello` (basic reachability)
+2. **`sdkApiVersion`** — `GET /apiversion?apiDomain=...&websiteDomain=...`, mirroring the
+   SDK's *first* core call (same headers, `redirect: "manual"`), which must answer 200
+   with `{ "versions": [...] }`. A proxy/WAF that allows `/` but blocks `/apiversion`
+   shows up here and surfaces in the app as "No SuperTokens core available to query".
 
 ```json
-{ "ok": true, "latencyMs": 54, "coreStatus": 200, "coreBody": "hello" }
+{
+  "ok": true,
+  "latencyMs": 40,
+  "coreStatus": 200,
+  "coreBody": "hello",
+  "hello": { "ok": true, "status": 200, "latencyMs": 37, "body": "hello" },
+  "sdkApiVersion": { "ok": true, "status": 200, "latencyMs": 3, "body": "{\"versions\":[\"5.4\"]}", "versions": ["5.4"] },
+  "env": { "usingDefaultUri": false, "coreHost": "auth.bytecraft.ir", "apiKeyConfigured": true }
+}
 ```
 
-It responds `200` when the core answers `hello`, and `503` with an `error.code` of
-`CORE_UNREACHABLE` or `UNEXPECTED_RESPONSE` otherwise.
+Responds `200` when **both** probes pass, `503` otherwise. Probe `error.code` values:
+`CORE_UNREACHABLE` (network/timeout), `UNEXPECTED_RESPONSE` (bad status/body),
+`REDIRECTED` (3xx — the SDK treats redirects as failures). `env` shows what this
+deployment is configured with (host only, never credentials) — compare it between
+Production and Preview when debugging Vercel env vars.
 
 It loads `.env` / `.env.local` like `validate-env`, sends the `api-key` header when
 `SUPERTOKENS_API_KEY` is set, times out after 5s (`SUPERTOKENS_TEST_TIMEOUT_MS` to override),
