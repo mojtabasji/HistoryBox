@@ -9,6 +9,7 @@
     "lint": "eslint",
     "postinstall": "prisma generate",
     "validate-env": "node scripts/validate-env.js",
+    "test:supertokens": "node scripts/test-supertokens-core.js",
     "pre-deploy": "node scripts/pre-deploy-check.js"
   },
   "dependencies": {

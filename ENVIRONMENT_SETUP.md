@@ -104,6 +104,26 @@ Optional:
 
 Routes are configured at `/api/auth` (API) and `/login` (UI) in code.
 
+Reachability test (expects the core's plain `hello` response):
+
+```bash
+npm run test:supertokens   # CLI: GET ${SUPERTOKENS_CONNECTION_URI}/ and assert "hello"
+GET /test                  # Same check over HTTP while the app runs
+```
+
+`GET /test` (route: `src/app/test/route.ts`, logic: `src/lib/supertokensHealth.ts`) returns JSON:
+
+```json
+{ "ok": true, "latencyMs": 54, "coreStatus": 200, "coreBody": "hello" }
+```
+
+It responds `200` when the core answers `hello`, and `503` with an `error.code` of
+`CORE_UNREACHABLE` or `UNEXPECTED_RESPONSE` otherwise.
+
+It loads `.env` / `.env.local` like `validate-env`, sends the `api-key` header when
+`SUPERTOKENS_API_KEY` is set, times out after 5s (`SUPERTOKENS_TEST_TIMEOUT_MS` to override),
+and exits non-zero if the core is unreachable or responds with anything but `hello`.
+
 ### Supabase / Database
 
 Required:
